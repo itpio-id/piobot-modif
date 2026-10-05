@@ -8,7 +8,7 @@ module.exports = function handler(req, res) {
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.search = new URLSearchParams({
     client_id: cfg.clientId,
-    redirect_uri: "https://itpio-assist.vercel.app/api/google/callback",
+    redirect_uri: cfg.redirectUri,
     response_type: "code",
     scope: "openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.file",
     access_type: "offline",

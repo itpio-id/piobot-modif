@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 
-const APP_URL = process.env.APP_URL || "https://itpio-assist.vercel.app";
+const APP_URL = String(process.env.APP_URL || "https://itpioassistv2.vercel.app").replace(/\/+$/, "");
 const COOKIE_AGE = 60 * 60 * 24 * 45;
 
 function cookies(req) {
@@ -26,13 +26,24 @@ function clearCookie(res, name, path = "/") {
 function config(provider) {
   const integrationSecret = process.env.INTEGRATION_SECRET;
   if (provider === "google") {
+    const redirectUri = String(process.env.GOOGLE_REDIRECT_URI || "").trim() || APP_URL + "/api/auth/callback/google";
     const missing = [!process.env.GOOGLE_CLIENT_ID && "GOOGLE_CLIENT_ID", !process.env.GOOGLE_CLIENT_SECRET && "GOOGLE_CLIENT_SECRET", !integrationSecret && "INTEGRATION_SECRET"].filter(Boolean);
-    return { missing, clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, integrationSecret };
+    return { missing, clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, integrationSecret, redirectUri };
   }
+  const apiToken = String(process.env.CLICKUP_API_TOKEN || "").trim();
+  if (apiToken) return { missing: [], apiToken, personalToken: true, integrationSecret };
+  const redirectUri = String(process.env.CLICKUP_REDIRECT_URI || "").trim() || APP_URL + "/api/clickup/callback";
   const missing = [!process.env.CLICKUP_CLIENT_ID && "CLICKUP_CLIENT_ID", !process.env.CLICKUP_CLIENT_SECRET && "CLICKUP_CLIENT_SECRET", !integrationSecret && "INTEGRATION_SECRET"].filter(Boolean);
-  return { missing, clientId: process.env.CLICKUP_CLIENT_ID, clientSecret: process.env.CLICKUP_CLIENT_SECRET, integrationSecret };
+  return { missing, clientId: process.env.CLICKUP_CLIENT_ID, clientSecret: process.env.CLICKUP_CLIENT_SECRET, integrationSecret, redirectUri, personalToken: false };
 }
 
+function callbackPath(provider) {
+  try {
+    return new URL(config(provider).redirectUri).pathname;
+  } catch {
+    return "/api/" + provider + "/callback";
+  }
+}
 function seal(value) {
   const secret = process.env.INTEGRATION_SECRET;
   if (!secret) throw new Error("INTEGRATION_SECRET belum dikonfigurasi di Vercel.");
@@ -70,14 +81,14 @@ function setSession(res, provider, value) {
 function startState(res, provider) {
   const name = provider === "google" ? "pio_google_state" : "pio_clickup_state";
   const state = crypto.randomBytes(24).toString("hex");
-  addCookie(res, name, state, { maxAge: 600, path: `/api/${provider}/callback` });
+  addCookie(res, name, state, { maxAge: 600, path: callbackPath(provider) });
   return state;
 }
 
 function checkState(req, res, provider, givenState) {
   const name = provider === "google" ? "pio_google_state" : "pio_clickup_state";
   const expected = cookies(req)[name] || "";
-  clearCookie(res, name, `/api/${provider}/callback`);
+  clearCookie(res, name, callbackPath(provider));
   return Boolean(expected && givenState && expected.length === givenState.length && crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(givenState)));
 }
 

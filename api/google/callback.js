@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
     const response = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ code, client_id: cfg.clientId, client_secret: cfg.clientSecret, redirect_uri: "https://itpio-assist.vercel.app/api/google/callback", grant_type: "authorization_code" })
+      body: new URLSearchParams({ code, client_id: cfg.clientId, client_secret: cfg.clientSecret, redirect_uri: cfg.redirectUri, grant_type: "authorization_code" })
     });
     const token = await response.json().catch(() => ({}));
     if (!response.ok || !token.access_token) {
