@@ -1,25 +1,68 @@
 const { googleAccessToken, error } = require("../_lib/integrations");
 
 const DRIVE = "https://www.googleapis.com/drive/v3/files";
-const MAX_UPLOAD_BYTES = 3 * 1024 * 1024;
 const MAX_CHAT_FILE_BYTES = 2 * 1024 * 1024;
+const MAX_DOWNLOAD_BYTES = 4 * 1024 * 1024;
 
 function safeFileName(value) {
   return String(value || "").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").trim().slice(0, 180);
 }
 
-async function uploadFile(access, name, mimeType, bytes) {
-  const form = new FormData();
-  form.append("metadata", new Blob([JSON.stringify({ name, mimeType })], { type: "application/json" }));
-  form.append("file", new Blob([bytes], { type: mimeType }), name);
-  const response = await fetch(`${DRIVE}?uploadType=multipart&fields=id,name,mimeType,webViewLink,modifiedTime`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${access}` },
-    body: form
-  });
-  const file = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error("Google Drive gagal menyimpan file. Periksa izin Drive lalu hubungkan ulang akun.");
-  return file;
+async function readLimited(response) {
+  const length = Number(response.headers.get("content-length") || 0);
+  if (length > MAX_DOWNLOAD_BYTES) throw Object.assign(new Error("File lebih dari 4 MB. Gunakan tautan Drive untuk mengunduh file berukuran penuh."), { status: 413 });
+  if (!response.body) {
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (bytes.length > MAX_DOWNLOAD_BYTES) throw Object.assign(new Error("File lebih dari 4 MB. Gunakan tautan Drive untuk mengunduh file berukuran penuh."), { status: 413 });
+    return bytes;
+  }
+  const reader = response.body.getReader();
+  const chunks = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_DOWNLOAD_BYTES) {
+      await reader.cancel().catch(() => {});
+      throw Object.assign(new Error("File lebih dari 4 MB. Gunakan tautan Drive untuk mengunduh file berukuran penuh."), { status: 413 });
+    }
+    chunks.push(Buffer.from(value));
+  }
+  return Buffer.concat(chunks, total);
+}
+
+async function downloadFile(access, id, res) {
+  if (!id || id.length > 200) return error(res, 400, "Pilih file Drive yang valid.");
+  const metaResponse = await fetch(`${DRIVE}/${encodeURIComponent(id)}?fields=id,name,mimeType,size,webContentLink,capabilities(canDownload)`, { headers: { Authorization: `Bearer ${access}` } });
+  const meta = await metaResponse.json().catch(() => ({}));
+  if (!metaResponse.ok) return error(res, metaResponse.status, "Tidak dapat membaca file Drive. Hubungkan ulang Google jika aksesnya berubah.");
+  if (meta.capabilities && meta.capabilities.canDownload === false) return error(res, 403, "Google tidak mengizinkan unduhan untuk file ini.");
+
+  let mimeType = meta.mimeType || "application/octet-stream";
+  let name = safeFileName(meta.name || "drive-file");
+  let url = `${DRIVE}/${encodeURIComponent(id)}?alt=media`;
+  const exports = {
+    "application/vnd.google-apps.document": ["application/pdf", ".pdf"],
+    "application/vnd.google-apps.spreadsheet": ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx"],
+    "application/vnd.google-apps.presentation": ["application/pdf", ".pdf"],
+    "application/vnd.google-apps.drawing": ["image/png", ".png"]
+  };
+  if (exports[mimeType]) {
+    const [exportType, extension] = exports[mimeType];
+    mimeType = exportType;
+    name = name.replace(/\.[^.]+$/, "") + extension;
+    url = `${DRIVE}/${encodeURIComponent(id)}/export?mimeType=${encodeURIComponent(exportType)}`;
+  }
+
+  const response = await fetch(url, { headers: { Authorization: `Bearer ${access}` } });
+  if (!response.ok) return error(res, response.status, "Google Drive gagal menyiapkan unduhan.");
+  const bytes = await readLimited(response);
+  const fallbackName = name.replace(/[^\x20-\x7E]/g, "_").replace(/[\\"]+/g, "_");
+  res.setHeader("Content-Type", mimeType);
+  res.setHeader("Content-Disposition", `attachment; filename="${fallbackName}"; filename*=UTF-8''${encodeURIComponent(name)}`);
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  return res.status(200).send(bytes);
 }
 
 async function readFileForChat(access, id) {
@@ -64,7 +107,10 @@ module.exports = async function handler(req, res) {
   try {
     const access = await googleAccessToken(req, res);
     if (req.method === "GET") {
-      const term = String(new URL(req.url, "https://itpioassistv2.vercel.app").searchParams.get("q") || "").trim().slice(0, 120);
+      const params = new URL(req.url, "https://itpioassistv2.vercel.app").searchParams;
+      const downloadId = String(params.get("download") || "").trim();
+      if (downloadId) return await downloadFile(access, downloadId, res);
+      const term = String(params.get("q") || "").trim().slice(0, 120);
       const escaped = term.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
       const url = new URL(DRIVE);
       url.search = new URLSearchParams({
@@ -72,7 +118,7 @@ module.exports = async function handler(req, res) {
         pageSize: escaped ? "20" : "3",
         orderBy: "modifiedTime desc",
         spaces: "drive",
-        fields: "files(id,name,mimeType,modifiedTime,webViewLink)"
+        fields: "files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink)"
       }).toString();
       const response = await fetch(url, { headers: { Authorization: `Bearer ${access}` } });
       const data = await response.json().catch(() => ({}));
@@ -90,23 +136,7 @@ module.exports = async function handler(req, res) {
       const attachment = await readFileForChat(access, String(body.fileId || ""));
       return res.status(200).json({ attachment });
     }
-    if (body.action === "upload") {
-      const name = safeFileName(body.name);
-      const mimeType = String(body.mimeType || "application/octet-stream").slice(0, 150);
-      const base64 = String(body.base64 || "");
-      if (!name || !base64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) return error(res, 400, "Pilih file yang valid untuk diunggah.");
-      const bytes = Buffer.from(base64, "base64");
-      if (!bytes.length || bytes.length > MAX_UPLOAD_BYTES) return error(res, 413, "Ukuran file maksimal 3 MB.");
-      if (bytes.toString("base64") !== base64) return error(res, 400, "Data file tidak valid. Pilih ulang file lalu coba lagi.");
-      const file = await uploadFile(access, name, mimeType, bytes);
-      return res.status(201).json({ file });
-    }
-
-    const title = safeFileName(body.title).slice(0, 160);
-    const content = String(body.content || "").trim().slice(0, 20000);
-    if (!title || !content) return error(res, 400, "Judul dan isi catatan harus diisi.");
-    const file = await uploadFile(access, `${title}.txt`, "text/plain", Buffer.from(content, "utf8"));
-    return res.status(201).json({ file });
+    return error(res, 400, "Aksi Drive tidak dikenal.");
   } catch (e) {
     return error(res, e.status || 401, e.message || "Hubungkan akun Google terlebih dahulu.");
   }
