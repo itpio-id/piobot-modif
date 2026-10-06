@@ -33,12 +33,13 @@ button,input,textarea,select{font:inherit}button,a{ -webkit-tap-highlight-color:
 @media(max-width:1180px){.layout{grid-template-columns:205px minmax(0,1fr)}.rail{position:static;grid-column:2;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:none}.rail-title,.rail-note,.rail-divider{grid-column:1/-1}.connect-card{margin:0}.workarea{grid-column:2;grid-row:1}}
 @media(max-width:760px){.layout{display:block;padding:8px}.sidebar{position:sticky;top:0;z-index:8;height:auto;min-height:0;padding:8px;margin:-8px -8px 9px;border-radius:0 0 15px 15px;background:#10181eee;backdrop-filter:blur(16px)}.brand{padding:2px 5px 8px}.brand-mark{width:33px;height:33px;font-size:17px}.brand small{display:none}.nav-label,.side-bottom{display:none}.nav{display:flex;overflow:auto;gap:3px}.nav button{width:auto;flex:0 0 auto;padding:8px 10px;font-size:12px}.nav-icon{font-size:14px;width:auto}.topbar{min-height:54px;padding:9px 12px;margin-bottom:9px}.intro{padding:20px 4px}.intro h1{font-size:34px}.split,.module-grid{grid-template-columns:1fr}.module-wide{grid-column:auto}.rail{margin-top:12px;display:block;padding:13px}.connect-card{margin-bottom:8px}.messages{height:320px;padding:13px}.chatbox{min-height:480px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.form-actions .btn{flex:1}.search-box{flex-wrap:wrap}.search-box input{flex-basis:100%}.footer{padding-bottom:28px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+  .brand-mark,.avatar-sm,.chat-avatar{overflow:hidden;padding:0}.brand-mark img,.avatar-sm img,.chat-avatar img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 10%}
 </style>
 </head>
 <body>
 <div class="layout">
   <aside class="sidebar">
-    <div class="brand"><div class="brand-mark">✳</div><div><strong>PioBot</strong><small>ITPIO workspace</small></div></div>
+    <div class="brand"><div class="brand-mark"><img src="/assets/agentpio-avatar.jpeg" alt="Avatar AgentPio"></div><div><strong>PioBot</strong><small>ITPIO workspace</small></div></div>
     <div class="nav-label">Workspace</div>
     <nav class="nav" aria-label="Navigasi workspace">
       <button class="active" data-view="chat"><span class="nav-icon">✳</span>Asisten</button>
@@ -47,15 +48,15 @@ button,input,textarea,select{font:inherit}button,a{ -webkit-tap-highlight-color:
       <button data-view="clickup"><span class="nav-icon">⌑</span>ClickUp</button>
       <button data-view="research"><span class="nav-icon">⌕</span>Riset harga</button>
     </nav>
-    <div class="side-bottom"><div class="presence"><span class="dot"></span><span>PioBot · Opus 5.5</span></div>Surabaya — Sidoarjo<br>Built for ITPIO</div>
+    <div class="side-bottom"><div class="presence"><span class="dot"></span><span>AgentPio Ready</span></div>Surabaya — Sidoarjo<br>Built for ITPIO</div>
   </aside>
   <div class="workarea">
-    <header class="topbar"><div><div class="eyebrow">ITPIO / DIGITAL WORKSPACE</div><strong id="todayLabel">Satu ruang untuk pekerjaan harian</strong></div><div class="top-actions"><a class="btn ghost smallbtn" href="/index.html" download="PioBot.html">↓ Unduh HTML</a><div class="avatar-sm">👋</div></div></header>
+    <header class="topbar"><div><div class="eyebrow">ITPIO / DIGITAL WORKSPACE</div><strong id="todayLabel">Satu ruang untuk pekerjaan harian</strong></div><div class="top-actions"><div class="avatar-sm"><img src="/assets/agentpio-avatar.jpeg" alt="Avatar AgentPio"></div></div></header>
     <main>
       <section class="screen active" id="screen-chat">
         <div class="intro"><div class="tag"><span class="dot"></span>Digital teammate · Active 24/7</div><h1>Halo, ITPIO.<br>Mulai dari yang perlu dibereskan.</h1><p>PioBot membantu menyiapkan jadwal, merapikan materi, menyimpan catatan, dan mengubah pekerjaan berulang jadi alur yang lebih ringan.</p></div>
         <div class="chatbox">
-          <div class="chat-head"><div class="chat-avatar">✳</div><div><strong>PioBot</strong><br><small>Asisten digital ITPIO</small></div><small id="apiStatus">Menghubungkan…</small></div>
+          <div class="chat-head"><div class="chat-avatar"><img src="/assets/agentpio-avatar.jpeg" alt="Avatar AgentPio"></div><div><strong>PioBot</strong><br><small>Asisten digital ITPIO</small></div><small id="apiStatus">Menghubungkan…</small></div>
           <div class="messages" id="messages" aria-live="polite"></div>
           <div class="suggestions" id="suggestions"></div>
           <div class="composer"><form id="chatForm" autocomplete="off"><input id="chatInput" maxlength="3000" placeholder="Tulis pesan atau pekerjaan yang ingin dibantu…" aria-label="Pesan untuk PioBot" required><button id="sendButton">Kirim ↗</button></form><p class="small muted" style="margin:8px 2px 0">Jangan kirim kata sandi, API key, atau data rahasia.</p></div>
@@ -91,7 +92,7 @@ button,input,textarea,select{font:inherit}button,a{ -webkit-tap-highlight-color:
     <div class="connect-card"><div class="connect-top"><div class="service-icon">◉</div><div><strong>Google Workspace</strong><small>Calendar + Drive</small></div><span class="state" id="googleState">cek…</span></div><button class="btn ghost smallbtn" id="googleConnect">Hubungkan Google</button><button class="btn ghost smallbtn" id="googleDisconnect" hidden>Putuskan</button></div>
     <div class="connect-card"><div class="connect-top"><div class="service-icon">⌑</div><div><strong>ClickUp</strong><small>Workspace + task</small></div><span class="state" id="clickupState">cek…</span></div><button class="btn ghost smallbtn" id="clickupConnect">Hubungkan ClickUp</button><button class="btn ghost smallbtn" id="clickupDisconnect" hidden>Putuskan</button></div>
     <div class="rail-divider"></div><div class="rail-title">Cara kerja</div><div class="rail-note">Akun terhubung lewat OAuth. Token disimpan terenkripsi di cookie HttpOnly; aplikasi tidak meminta kata sandi Google atau ClickUp.</div>
-    <div class="rail-note">Pencarian harga dibuka di browser agar sumber listing dapat diperiksa. File HTML berisi antarmuka; API chat dan konektor berjalan di Vercel.</div>
+    <div class="rail-note">Pencarian harga dibuka di browser agar sumber listing dapat diperiksa. Chat dan konektor berjalan di Vercel.</div>
     <div class="rail-divider"></div><a class="btn ghost smallbtn" href="https://wa.me/6283125299879" target="_blank" rel="noopener">Hubungi ITPIO ↗</a>
   </aside>
 </div>
@@ -116,7 +117,7 @@ qs("#chatForm").addEventListener("submit",function(e){e.preventDefault();const v
 addBubble("assistant","Halo, saya PioBot ✳ Saya siap bantu menyusun jadwal, merapikan materi, dan menyiapkan pekerjaan ITPIO. Apa yang ingin kamu bereskan?");
 document.querySelectorAll(".nav button").forEach(function(button){button.addEventListener("click",function(){document.querySelectorAll(".nav button").forEach(function(x){x.classList.remove("active")});button.classList.add("active");document.querySelectorAll(".screen").forEach(function(x){x.classList.remove("active")});qs("#screen-"+button.dataset.view).classList.add("active");if(button.dataset.view==="calendar")loadCalendar();if(button.dataset.view==="drive")loadDrive();if(button.dataset.view==="clickup"&&clickupConnected)loadLists()})});
 function setState(service,connected,label,configured,disconnectable){const status=qs("#"+service+"State");status.textContent=connected?(label||"terhubung"):(configured?"belum aktif":"setup");status.classList.toggle("connected",connected);qs("#"+service+"Connect").hidden=connected;qs("#"+service+"Disconnect").hidden=!connected||disconnectable===false}
-async function loadIntegrations(){try{const data=await api("/api/integrations");googleConnected=data.google.connected;clickupConnected=data.clickup.connected;googleConfigured=data.google.configured;clickupConfigured=data.clickup.configured;setState("google",googleConnected,data.google.email,googleConfigured);setState("clickup",clickupConnected,data.clickup.user,clickupConfigured,data.clickup.disconnectable);api("/api/chat").then(function(x){apiStatus.textContent=x.configured?"🟢 Opus 5.5 tersambung":"⚠️ KIE belum disetel"}).catch(function(){apiStatus.textContent="AI belum tersedia"});if(googleConnected){loadCalendar();loadDrive()}if(clickupConnected)loadLists()}catch(e){setState("google",false,null,false);setState("clickup",false,null,false);apiStatus.textContent="API belum siap"}}
+async function loadIntegrations(){try{const data=await api("/api/integrations");googleConnected=data.google.connected;clickupConnected=data.clickup.connected;googleConfigured=data.google.configured;clickupConfigured=data.clickup.configured;setState("google",googleConnected,data.google.email,googleConfigured);setState("clickup",clickupConnected,data.clickup.user,clickupConfigured,data.clickup.disconnectable);api("/api/chat").then(function(x){apiStatus.textContent=x.configured?"🟢 AgentPio Ready":"⚠️ KIE belum disetel"}).catch(function(){apiStatus.textContent="AI belum tersedia"});if(googleConnected){loadCalendar();loadDrive()}if(clickupConnected)loadLists()}catch(e){setState("google",false,null,false);setState("clickup",false,null,false);apiStatus.textContent="API belum siap"}}
 function connect(service){const ready=service==="google"?googleConfigured:clickupConfigured;if(!ready){notify(service==="google"?"Setup Vercel: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, INTEGRATION_SECRET.":"Setup Vercel: CLICKUP_CLIENT_ID, CLICKUP_CLIENT_SECRET, INTEGRATION_SECRET.");return}location.href="/api/"+service+"/auth"}
 qs("#googleConnect").addEventListener("click",function(){connect("google")});qs("#clickupConnect").addEventListener("click",function(){connect("clickup")});
 async function disconnect(service){try{await api("/api/"+service+"/disconnect",{method:"POST"});notify("Koneksi "+service+" diputus.");await loadIntegrations()}catch(e){notify(e.message)}}
