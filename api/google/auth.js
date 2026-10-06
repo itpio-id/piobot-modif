@@ -10,7 +10,7 @@ module.exports = function handler(req, res) {
     client_id: cfg.clientId,
     redirect_uri: cfg.redirectUri,
     response_type: "code",
-    scope: "openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.file",
+    scope: "openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly",
     access_type: "offline",
     prompt: "consent",
     include_granted_scopes: "true",
