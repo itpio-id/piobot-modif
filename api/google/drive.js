@@ -69,7 +69,7 @@ module.exports = async function handler(req, res) {
       const url = new URL(DRIVE);
       url.search = new URLSearchParams({
         q: `trashed = false${escaped ? ` and name contains '${escaped}'` : ""}`,
-        pageSize: "20",
+        pageSize: escaped ? "20" : "3",
         orderBy: "modifiedTime desc",
         spaces: "drive",
         fields: "files(id,name,mimeType,modifiedTime,webViewLink)"
