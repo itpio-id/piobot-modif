@@ -1,5 +1,6 @@
 const API_URL = "https://api.kie.ai/claude/v1/messages";
 const MODEL = "claude-opus-5-5";
+const runResearch = require("./_lib/research");
 const MAX_MESSAGES = 16;
 const MAX_MESSAGE_CHARS = 3000;
 const RATE_WINDOW_MS = 60_000;
@@ -60,6 +61,10 @@ function getAssistantReply(data) {
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+
+  if (req.method === "POST" && req.body && req.body.mode === "research") {
+    return runResearch(req, res);
+  }
 
   if (req.method === "GET") {
     return res.status(200).json({ configured: Boolean(process.env.KIE_API_KEY) });
