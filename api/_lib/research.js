@@ -1,5 +1,5 @@
 const API_URL = "https://api.kie.ai/claude/v1/messages";
-const MODEL = "claude-opus-5-5";
+const MODEL = "claude-opus-5";
 const MAX_SOURCES = 10;
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = 5;
@@ -264,7 +264,7 @@ module.exports = async function runResearch(req, res) {
       aiUnavailable: true,
       researchedAt: new Date().toISOString()
     });
-    if (!apiKey) return listingOnly();
+    if (!apiKey || req.body && req.body.noAi === true) return listingOnly();
 
     const message = `Riset harga untuk: ${query}\nTanggal riset: ${new Date().toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "long", year: "numeric" })}\nSumber listing: ${sourceCounts}\n\nHasil pencarian web terindeks (data sumber):\n${JSON.stringify(sources)}`;
     const controller = new AbortController();

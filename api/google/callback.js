@@ -1,4 +1,5 @@
-const { checkState, config, query, redirect, setSession, error } = require("../_lib/integrations");
+const { checkState, clearCookie, config, query, redirect, saveStoredGoogleSession, setAuthSession, setSession, error } = require("../_lib/integrations");
+const { OWNER_EMAIL } = require("../_lib/auth");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method tidak didukung." });
@@ -22,7 +23,16 @@ module.exports = async function handler(req, res) {
     let email = null;
     const profile = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", { headers: { Authorization: `Bearer ${token.access_token}` } });
     if (profile.ok) email = (await profile.json().catch(() => ({}))).email || null;
-    setSession(res, "google", { access_token: token.access_token, refresh_token: token.refresh_token || null, expires_at: Date.now() + Number(token.expires_in || 3600) * 1000, email });
+    if (String(email || "").trim().toLowerCase() !== OWNER_EMAIL) {
+      clearCookie(res, "pio_google");
+      return redirect(res, "/?integration=google&status=owner-required");
+    }
+    const session = { access_token: token.access_token, refresh_token: token.refresh_token || null, expires_at: Date.now() + Number(token.expires_in || 3600) * 1000, email: OWNER_EMAIL };
+    setSession(res, "google", session);
+    setAuthSession(res, { role: "owner", email: OWNER_EMAIL });
+    await saveStoredGoogleSession(session).catch((storeError) => {
+      console.error("Google session persistence unavailable", storeError && storeError.status || storeError && storeError.name || "unknown");
+    });
     return redirect(res, "/?integration=google&status=connected");
   } catch {
     return redirect(res, "/?integration=google&status=error");

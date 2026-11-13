@@ -30,6 +30,7 @@ export default function App() {
     window.parent !== window && new URLSearchParams(window.location.search).get("embedded") === "piobot"
   );
   const [tab, setTab] = useState<Tab>("build");
+  const [authRole, setAuthRole] = useState<"loading" | "owner" | "staff" | "public">("loading");
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [invoice, setInvoice] = useState<Invoice>(() => emptyInvoice(nextInvoiceNo([])));
   const [storageMode, setStorageMode] = useState<"remote" | "loading" | "error">("loading");
@@ -44,24 +45,52 @@ export default function App() {
   useEffect(() => {
     function handleParentTheme(event: MessageEvent<unknown>) {
       if (event.source !== window.parent || event.origin !== window.location.origin) return;
-      if (!event.data || typeof event.data !== "object" || !("type" in event.data) || !("theme" in event.data)) return;
-      const message = event.data as { type?: unknown; theme?: unknown };
-      if (message.type !== "piobot-theme" || (message.theme !== "light" && message.theme !== "dark")) return;
-      document.documentElement.dataset.theme = message.theme;
+      if (!event.data || typeof event.data !== "object" || !("type" in event.data)) return;
+      const message = event.data as { type?: unknown; theme?: unknown; payload?: Record<string, unknown> };
+      if (message.type === "piobot-theme" && (message.theme === "light" || message.theme === "dark")) {
+        document.documentElement.dataset.theme = message.theme;
+        return;
+      }
+      if (message.type !== "piobot-invoice-draft" || authRole !== "owner" || !message.payload) return;
+      const draft = message.payload;
+      const next = emptyInvoice(nextInvoiceNo(invoices));
+      const quantity = Math.max(1, Number(draft.quantity) || 1);
+      const price = Math.max(0, Number(draft.suggestedPrice) || 0);
+      setInvoice({
+        ...next,
+        customerName: String(draft.customerName || ""),
+        customerPhone: String(draft.customerPhone || ""),
+        customerEmail: String(draft.customerEmail || ""),
+        customerAddress: String(draft.customerAddress || ""),
+        items: [{ ...next.items[0], name: String(draft.itemName || ""), description: [draft.specifications, draft.condition].filter(Boolean).join(" · "), qty: quantity, price }],
+        notes: `DRAF — tinjau sebelum digunakan. Saran harga: modal pemasok + biaya terkait + markup kategori ${Number(draft.markupPercent) || 0}%. ${String(draft.formula || "")}`
+      });
+      setTab("build");
+      setToast("Draf invoice PioBot dibuka. Tinjau data dan harga sebelum menyimpan.");
+      window.parent.postMessage({ type: "piosales-draft-loaded" }, window.location.origin);
     }
 
     window.addEventListener("message", handleParentTheme);
-    if (embeddedInPiobot) {
+    if (embeddedInPiobot && authRole !== "loading") {
       window.parent.postMessage({ type: "piosales-ready" }, window.location.origin);
     }
     return () => window.removeEventListener("message", handleParentTheme);
-  }, [embeddedInPiobot]);
+  }, [embeddedInPiobot, authRole, invoices]);
 
   useEffect(() => {
     let cancelled = false;
-    setStorageMode("loading");
     (async () => {
       try {
+        const authResponse = await fetch("/api/auth/session", { cache: "no-store", credentials: "same-origin" });
+        const auth = await authResponse.json().catch(() => ({}));
+        if (cancelled) return;
+        setAuthRole(auth.role === "owner" || auth.role === "staff" ? auth.role : "public");
+        if (auth.role !== "owner") {
+          setStorageMode("error");
+          setInvoicesLoaded(true);
+          return;
+        }
+        setStorageMode("loading");
         const res = await listInvoices();
         if (cancelled) return;
         setInvoices(res.items);
@@ -182,6 +211,17 @@ export default function App() {
 
   if (!invoicesLoaded) {
     return <div className="piosales-app flex min-h-screen items-center justify-center gap-2 bg-slate-50 text-sm font-semibold text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Memuat invoice dari Supabase...</div>;
+  }
+
+  if (authRole !== "owner") {
+    return <div className="piosales-app flex min-h-screen items-center justify-center bg-slate-50 p-6">
+      <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-7 text-center shadow-sm">
+        <LogoMark className="mx-auto mb-4 h-12 w-12" />
+        <h1 className="text-xl font-bold text-slate-900">PioSales khusus pemilik</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Masuk dengan akun Google pemilik di PioBot untuk membuka dan mengelola invoice.</p>
+        {authRole === "staff" ? <p className="mt-4 text-sm font-semibold text-amber-700">Akun reviewer tidak memiliki akses kalender atau invoice.</p> : <a className="mt-5 inline-flex rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white" href="/api/google/auth">Masuk dengan Google</a>}
+      </div>
+    </div>;
   }
 
   return (

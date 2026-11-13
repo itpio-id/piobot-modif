@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { googleAccessToken, error } = require("../_lib/integrations");
+const { requireRole } = require("../_lib/auth");
 
 const DRIVE = "https://www.googleapis.com/drive/v3/files";
 const DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3/files";
@@ -157,11 +158,12 @@ async function readLimited(response) {
   return Buffer.concat(chunks, total);
 }
 
-async function downloadFile(access, id, res) {
+async function downloadFile(access, id, res, staffOnly = false) {
   if (!id || id.length > 200) return error(res, 400, "Pilih file Drive yang valid.");
-  const metaResponse = await fetch(`${DRIVE}/${encodeURIComponent(id)}?fields=id,name,mimeType,size,webContentLink,capabilities(canDownload)`, { headers: { Authorization: `Bearer ${access}` } });
+  const metaResponse = await fetch(`${DRIVE}/${encodeURIComponent(id)}?fields=id,name,mimeType,size,webContentLink,appProperties,capabilities(canDownload)`, { headers: { Authorization: `Bearer ${access}` } });
   const meta = await metaResponse.json().catch(() => ({}));
   if (!metaResponse.ok) return error(res, metaResponse.status, "Tidak dapat membaca file Drive. Hubungkan ulang Google jika aksesnya berubah.");
+  if (staffOnly && !(meta.appProperties && meta.appProperties.piobotPurpose === "piobot-content-draft")) return error(res, 403, "Reviewer hanya dapat membuka draf PioGrowth/PioStudio yang dibuat PioBot.");
   if (meta.capabilities && meta.capabilities.canDownload === false) return error(res, 403, "Google tidak mengizinkan unduhan untuk file ini.");
 
   let mimeType = meta.mimeType || "application/octet-stream";
@@ -190,11 +192,12 @@ async function downloadFile(access, id, res) {
   return res.status(200).send(bytes);
 }
 
-async function readFileForChat(access, id) {
+async function readFileForChat(access, id, staffOnly = false) {
   if (!id || String(id).length > 200) throw Object.assign(new Error("Pilih file Drive yang valid."), { status: 400 });
-  const metaResponse = await fetch(`${DRIVE}/${encodeURIComponent(id)}?fields=id,name,mimeType,size,capabilities(canDownload)`, { headers: { Authorization: `Bearer ${access}` } });
+  const metaResponse = await fetch(`${DRIVE}/${encodeURIComponent(id)}?fields=id,name,mimeType,size,appProperties,capabilities(canDownload)`, { headers: { Authorization: `Bearer ${access}` } });
   const meta = await metaResponse.json().catch(() => ({}));
   if (!metaResponse.ok) throw Object.assign(new Error("Tidak dapat membaca informasi file Drive. Hubungkan ulang Google jika izin berubah."), { status: metaResponse.status });
+  if (staffOnly && !(meta.appProperties && meta.appProperties.piobotPurpose === "piobot-content-draft")) throw Object.assign(new Error("Reviewer hanya dapat menganalisis draf PioGrowth/PioStudio yang dibuat PioBot."), { status: 403 });
   if (meta.capabilities && meta.capabilities.canDownload === false) throw Object.assign(new Error("File ini tidak mengizinkan unduhan untuk analisis."), { status: 403 });
 
   let mimeType = meta.mimeType || "application/octet-stream";
@@ -226,20 +229,43 @@ async function readFileForChat(access, id) {
   return attachment;
 }
 
+async function createTextDraft(access, body) {
+  const title = safeFileName(body.title || "Draf PioBot").replace(/\.(?:txt|md)$/i, "").slice(0, 160);
+  const content = String(body.content || "").trim();
+  if (!content || content.length > 30000) throw Object.assign(new Error("Isi draf kosong atau melebihi 30.000 karakter."), { status: 400 });
+  const boundary = `piobot_${crypto.randomBytes(12).toString("hex")}`;
+  const metadata = { name: title, mimeType: "application/vnd.google-apps.document", appProperties: { piobotPurpose: "piobot-content-draft" } };
+  const multipart = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n`),
+    Buffer.from(content, "utf8"),
+    Buffer.from(`\r\n--${boundary}--\r\n`)
+  ]);
+  const url = new URL(DRIVE_UPLOAD);
+  url.search = new URLSearchParams({ uploadType: "multipart", supportsAllDrives: "true", fields: "id,name,mimeType,webViewLink" }).toString();
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${access}`, "Content-Type": `multipart/related; boundary=${boundary}` },
+    body: multipart
+  });
+  return driveJson(response, "Google Drive gagal menyimpan draf.");
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (!["GET", "POST"].includes(req.method)) return res.status(405).json({ error: "Method tidak didukung." });
+  const auth = await requireRole(req, res, ["owner", "staff"]);
+  if (!auth) return;
   try {
     const access = await googleAccessToken(req, res);
     if (req.method === "GET") {
       const params = new URL(req.url, "https://itpioassistv2.vercel.app").searchParams;
       const downloadId = String(params.get("download") || "").trim();
-      if (downloadId) return await downloadFile(access, downloadId, res);
+      if (downloadId) return await downloadFile(access, downloadId, res, auth.role === "staff");
       const term = String(params.get("q") || "").trim().slice(0, 120);
       const escaped = term.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
       const url = new URL(DRIVE);
       url.search = new URLSearchParams({
-        q: `trashed = false${escaped ? ` and name contains '${escaped}'` : ""}`,
+        q: `trashed = false${auth.role === "staff" ? " and appProperties has { key = 'piobotPurpose' and value = 'piobot-content-draft' }" : ""}${escaped ? ` and name contains '${escaped}'` : ""}`,
         pageSize: escaped ? "20" : "3",
         orderBy: "modifiedTime desc",
         spaces: "drive",
@@ -258,12 +284,17 @@ module.exports = async function handler(req, res) {
 
     const body = req.body || {};
     if (body.action === "save-piosales-invoice") {
+      if (auth.role !== "owner") return error(res, 403, "Invoice PioSales hanya bisa disimpan oleh pemilik.");
       const saved = await saveInvoiceToDrive(access, body);
       return res.status(200).json({ ok: true, ...saved });
     }
     if (body.action === "read-for-chat") {
-      const attachment = await readFileForChat(access, String(body.fileId || ""));
+      const attachment = await readFileForChat(access, String(body.fileId || ""), auth.role === "staff");
       return res.status(200).json({ attachment });
+    }
+    if (body.action === "create-content-draft") {
+      const file = await createTextDraft(access, body);
+      return res.status(201).json({ file: { id: file.id, name: file.name, url: file.webViewLink || `https://docs.google.com/document/d/${file.id}/edit` } });
     }
     return error(res, 400, "Aksi Drive tidak dikenal.");
   } catch (e) {

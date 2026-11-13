@@ -1,4 +1,5 @@
 const { error, getSession } = require("../_lib/integrations");
+const { requireRole } = require("../_lib/auth");
 
 const BASE = "https://api.clickup.com/api/v2";
 
@@ -31,20 +32,34 @@ async function getLists(authorization) {
   return lists;
 }
 
+function staffAllowedLists(lists) {
+  const configured = String(process.env.PIOBOT_STAFF_CLICKUP_LIST_IDS || "").split(",").map(value => value.trim()).filter(Boolean);
+  if (configured.length) return lists.filter(list => configured.includes(String(list.id)));
+  return lists.filter(list => /piogrowth|piostudio/i.test(`${list.name} ${list.space || ""} ${list.folder || ""}`));
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (!["GET", "POST"].includes(req.method)) return res.status(405).json({ error: "Method tidak didukung." });
+  const auth = await requireRole(req, res, ["owner", "staff"]);
+  if (!auth) return;
   const session = getSession(req, "clickup");
   const personalToken = String(process.env.CLICKUP_API_TOKEN || "").trim();
   const authorization = personalToken || (session && session.access_token ? "Bearer " + session.access_token : "");
   if (!authorization) return error(res, 401, "Hubungkan akun ClickUp terlebih dahulu.");
   try {
-    if (req.method === "GET") return res.status(200).json({ lists: await getLists(authorization) });
+    if (req.method === "GET") {
+      const lists = await getLists(authorization);
+      return res.status(200).json({ lists: auth.role === "staff" ? staffAllowedLists(lists) : lists });
+    }
     const body = req.body || {};
     const listId = String(body.listId || "").trim();
     const name = String(body.name || "").trim().slice(0, 200);
     const description = String(body.description || "").trim().slice(0, 8000);
     if (!listId || !/^[A-Za-z0-9_-]{1,80}$/.test(listId) || !name) return error(res, 400, "Pilih list dan isi nama task.");
+    if (auth.role === "staff" && !staffAllowedLists(await getLists(authorization)).some(list => String(list.id) === listId)) {
+      return error(res, 403, "Reviewer hanya dapat membuat task di list PioGrowth atau PioStudio yang diizinkan.");
+    }
     const task = await clickup(authorization, "/list/" + encodeURIComponent(listId) + "/task", {
       method: "POST", body: JSON.stringify({ name, description })
     });

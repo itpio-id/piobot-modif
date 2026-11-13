@@ -1,4 +1,5 @@
-const { config, getSession } = require("./_lib/integrations");
+const { config, getSession, getStoredGoogleSession } = require("./_lib/integrations");
+const { verifyAuth } = require("./_lib/auth");
 const marketplaceHandlers = {
   shopee: require("./_lib/shopee-handler"),
   tokopedia: require("./_lib/tokopedia-handler"),
@@ -14,7 +15,14 @@ module.exports = async function handler(req, res) {
     return marketplaceHandler(req, res);
   }
   if (req.method !== "GET") return res.status(405).json({ error: "Method tidak didukung." });
+  const auth = await verifyAuth(req);
+  if (!auth) return res.status(200).json({
+    role: "public",
+    google: { configured: false, connected: false },
+    clickup: { configured: false, connected: false }
+  });
   const google = getSession(req, "google");
+  const storedGoogle = await getStoredGoogleSession().catch(() => null);
   const clickupSession = getSession(req, "clickup");
   const clickupConfig = config("clickup");
   let clickupConnected = Boolean(clickupSession);
@@ -34,7 +42,8 @@ module.exports = async function handler(req, res) {
     } catch {}
   }
   return res.status(200).json({
-    google: { configured: config("google").missing.length === 0, connected: Boolean(google), email: google && google.email || null },
-    clickup: { configured: clickupConfig.missing.length === 0, connected: clickupConnected, user: clickupUser, disconnectable: clickupDisconnectable }
+    role: auth.role,
+    google: { configured: auth.role === "owner" && config("google").missing.length === 0, connected: Boolean(google || storedGoogle), email: auth.role === "owner" && (google || storedGoogle) && (google || storedGoogle).email || null },
+    clickup: { configured: auth.role === "owner" && clickupConfig.missing.length === 0, connected: clickupConnected, user: auth.role === "owner" ? clickupUser : null, disconnectable: auth.role === "owner" && clickupDisconnectable }
   });
 };

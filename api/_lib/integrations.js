@@ -26,7 +26,7 @@ function clearCookie(res, name, path = "/") {
 function config(provider) {
   const integrationSecret = process.env.INTEGRATION_SECRET;
   if (provider === "google") {
-    const redirectUri = String(process.env.GOOGLE_REDIRECT_URI || "").trim() || APP_URL + "/api/auth/callback/google";
+    const redirectUri = String(process.env.GOOGLE_REDIRECT_URI || process.env.google_redirect_url || "").trim() || APP_URL + "/api/auth/callback/google";
     const missing = [!process.env.GOOGLE_CLIENT_ID && "GOOGLE_CLIENT_ID", !process.env.GOOGLE_CLIENT_SECRET && "GOOGLE_CLIENT_SECRET", !integrationSecret && "INTEGRATION_SECRET"].filter(Boolean);
     return { missing, clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, integrationSecret, redirectUri };
   }
@@ -78,6 +78,10 @@ function setSession(res, provider, value) {
   addCookie(res, provider === "google" ? "pio_google" : "pio_clickup", seal(value));
 }
 
+function setAuthSession(res, value) {
+  addCookie(res, "pio_auth", seal({ ...value, expires_at: Date.now() + 12 * 60 * 60 * 1000 }), { maxAge: 12 * 60 * 60 });
+}
+
 function startState(res, provider) {
   const name = provider === "google" ? "pio_google_state" : "pio_clickup_state";
   const state = crypto.randomBytes(24).toString("hex");
@@ -107,6 +111,12 @@ function error(res, status, message) {
 }
 
 async function googleAccessToken(req, res) {
+  const stored = await getStoredGoogleSession().catch(() => null);
+  if (stored && stored.access_token && stored.expires_at > Date.now() + 60_000) return stored.access_token;
+  if (stored && stored.refresh_token) {
+    const refreshed = await refreshGoogleSession(stored, res);
+    return refreshed.access_token;
+  }
   const session = getSession(req, "google");
   if (!session) throw new Error("Hubungkan akun Google terlebih dahulu.");
   if (session.access_token && session.expires_at > Date.now() + 60_000) return session.access_token;
@@ -125,4 +135,65 @@ async function googleAccessToken(req, res) {
   return updated.access_token;
 }
 
-module.exports = { APP_URL, addCookie, clearCookie, config, cookies, error, getSession, googleAccessToken, query, redirect, setSession, startState, checkState, unseal };
+async function refreshGoogleSession(session, res) {
+  if (!session.refresh_token) throw new Error("Sesi Google berakhir. Hubungkan ulang akun Google.");
+  const cfg = config("google");
+  if (cfg.missing.length) throw new Error("Konfigurasi Google belum lengkap di Vercel.");
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ client_id: cfg.clientId, client_secret: cfg.clientSecret, refresh_token: session.refresh_token, grant_type: "refresh_token" })
+  });
+  const token = await response.json().catch(() => ({}));
+  if (!response.ok || !token.access_token) throw new Error("Sesi Google tidak dapat diperbarui. Hubungkan ulang akun Google.");
+  const updated = { ...session, access_token: token.access_token, expires_at: Date.now() + Number(token.expires_in || 3600) * 1000, refresh_token: token.refresh_token || session.refresh_token };
+  await saveStoredGoogleSession(updated).catch(() => {});
+  if (res) setSession(res, "google", updated);
+  return updated;
+}
+
+function supabaseConfig() {
+  return {
+    url: String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "").replace(/\/+$/, ""),
+    key: String(process.env.SUPABASE_SERVICE_ROLE_KEY || "")
+  };
+}
+
+async function supabaseRequest(path, options = {}) {
+  const cfg = supabaseConfig();
+  if (!cfg.url || !cfg.key) throw new Error("Setup server belum lengkap: SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY.");
+  const response = await fetch(cfg.url + "/rest/v1/" + path, {
+    ...options,
+    headers: {
+      apikey: cfg.key,
+      Authorization: `Bearer ${cfg.key}`,
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    },
+    cache: "no-store"
+  });
+  const text = await response.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch {}
+  if (!response.ok) throw Object.assign(new Error(data && (data.message || data.error) || "Supabase server gagal memproses permintaan."), { status: response.status });
+  return data;
+}
+
+async function getStoredGoogleSession() {
+  const rows = await supabaseRequest("piobot_integrations?name=eq.google&select=payload&limit=1");
+  return rows && rows[0] && unseal(rows[0].payload) || null;
+}
+
+async function saveStoredGoogleSession(session) {
+  return supabaseRequest("piobot_integrations?on_conflict=name", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ name: "google", payload: seal(session), updated_at: new Date().toISOString() })
+  });
+}
+
+async function deleteStoredGoogleSession() {
+  return supabaseRequest("piobot_integrations?name=eq.google", { method: "DELETE", headers: { Prefer: "return=minimal" } });
+}
+
+module.exports = { APP_URL, addCookie, clearCookie, config, cookies, error, getSession, getStoredGoogleSession, googleAccessToken, query, redirect, seal, setAuthSession, setSession, startState, checkState, supabaseConfig, supabaseRequest, saveStoredGoogleSession, deleteStoredGoogleSession, unseal };

@@ -1,7 +1,9 @@
 const { config, error, redirect, startState } = require("../_lib/integrations");
+const { requireRole } = require("../_lib/auth");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method tidak didukung." });
+  if (!await requireRole(req, res, ["owner"])) return;
   const cfg = config("clickup");
   if (cfg.apiToken) {
     try {
