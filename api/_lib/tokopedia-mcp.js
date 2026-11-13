@@ -3,8 +3,10 @@ const fs = require("fs");
 const path = require("path");
 
 const localEntryPoint = path.resolve(__dirname, "..", "..", ".tokopedia-runtime", "node_modules", "@bintangtimurlangit", "tokopedia-mcp", "build", "index.js");
-let deployedEntryPoint = "";
-try { deployedEntryPoint = require.resolve("@bintangtimurlangit/tokopedia-mcp"); } catch {}
+const deployedEntryPoint = [
+  path.resolve(process.cwd(), "node_modules", "@bintangtimurlangit", "tokopedia-mcp", "build", "index.js"),
+  path.resolve(__dirname, "..", "..", "node_modules", "@bintangtimurlangit", "tokopedia-mcp", "build", "index.js")
+].find(candidate => fs.existsSync(candidate)) || "";
 const entryPoint = process.env.VERCEL === "1" ? deployedEntryPoint : fs.existsSync(localEntryPoint) ? localEntryPoint : deployedEntryPoint;
 const pending = new Map();
 let child = null;
