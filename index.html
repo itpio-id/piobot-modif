@@ -269,7 +269,26 @@ body.piosales-view.piosales-compact .topbar-module{display:block;max-width:130px
       </section>
       <section class="screen" id="screen-research">
         <div class="page-title"><div class="eyebrow">MARKET INTELLIGENCE / INDONESIA</div><h1>Riset harga bersama PioBot.</h1><p>PioBot mencari listing terbaru dan merangkum kisaran harga langsung di halaman ini.</p></div>
-        <div class="module-grid"><div class="card module-wide"><h2>Cari produk atau spesifikasi</h2><p class="muted small">Contoh: Laptop AMD Ryzen 7 8845HS Ram 16GB SSD NVME 1TB.</p><form id="searchForm"><div class="search-box"><input id="searchQuery" maxlength="180" required placeholder="Merek, model, kondisi, dan lokasi"><button class="btn" id="researchButton">Riset harga market</button></div></form><div class="statusline" id="researchStatus" aria-live="polite"></div><div class="research-result" id="researchResult" hidden><h3>Ringkasan riset</h3><div class="research-summary" id="researchSummary"></div><h3 id="researchListingTitle">Listing marketplace</h3><div class="research-table-wrap" role="region" aria-label="Tabel listing riset harga" tabindex="0"><table class="research-table"><thead><tr><th scope="col">No.</th><th scope="col">Listing</th><th scope="col">Harga</th><th scope="col">Spesifikasi</th><th scope="col">Kondisi</th><th scope="col">Sumber / rilis tanggal</th><th scope="col">Tautan</th></tr></thead><tbody id="marketResults"></tbody></table></div></div><div class="callout">Satu kali pencarian menggabungkan listing publik terindeks dari Shopee, Tokopedia, dan TikTok Shop. jika ada kendala hubungi itpio.id</div></div></div>
+        <div class="module-grid">
+          <div class="card module-wide">
+            <h2>Cari produk atau spesifikasi</h2>
+            <p class="muted small">Contoh: Laptop AMD Ryzen 7 8845HS Ram 16GB SSD NVME 1TB.</p>
+            <form id="searchForm"><div class="search-box"><input id="searchQuery" maxlength="180" required placeholder="Merek, model, kondisi, dan lokasi"><button class="btn" id="researchButton">Riset harga market</button></div></form>
+            <div class="statusline" id="researchStatus" aria-live="polite"></div>
+            <div class="research-result" id="researchResult" hidden>
+              <h3>Ringkasan riset</h3>
+              <div class="research-summary" id="researchSummary"></div>
+              <h3 id="researchListingTitle">Listing marketplace</h3>
+              <div class="research-table-wrap" role="region" aria-label="Tabel listing riset harga" tabindex="0">
+                <table class="research-table">
+                  <thead><tr><th scope="col">No.</th><th scope="col">Listing</th><th scope="col">Harga</th><th scope="col">Sumber</th></tr></thead>
+                  <tbody id="marketResults"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="callout">Riset harga laptop sesuai kebutuhan dan budget Anda. Jika ada kendala, hubungi itpio.id.</div>
+          </div>
+        </div>
       </section>
       <section class="screen" id="screen-piosales" aria-label="PioSales">
         <iframe id="piosalesFrame" title="PioSales — Invoice Generator by ITPIO" src="/piosales/?embedded=piobot" loading="lazy" referrerpolicy="same-origin"></iframe>
@@ -388,7 +407,6 @@ async function loadLists(){const select=qs("#taskList");select.innerHTML='<optio
 qs("#loadClickupLists").addEventListener("click",loadLists);
 qs("#taskForm").addEventListener("submit",async function(e){e.preventDefault();if(!clickupConnected){status("clickupStatus","Hubungkan ClickUp terlebih dahulu.","error");return}try{status("clickupStatus","Membuat task…");const data=await api("/api/clickup/tasks",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({listId:qs("#taskList").value,name:qs("#taskName").value,description:qs("#taskDescription").value})});status("clickupStatus","Task dibuat di ClickUp.","ok");e.target.reset();if(data.task&&data.task.url)window.open(data.task.url,"_blank","noopener")}catch(err){status("clickupStatus",err.message,"error")}});
 function researchPrice(source){if(typeof source.price==="string"&&source.price.trim())return source.price.trim();const pattern=/(?:\b(?:Rp\.?\s*|IDR\s*)\d[\d.,]*(?:\s*(?:ribu|rb|juta|jt|miliar))?|\b\d[\d.,]*(?:\s*(?:ribu|rb|juta|jt|miliar))?\s*(?:rupiah|IDR)\b)/i;const text=String(source.title||"")+" "+String(source.snippet||"");const match=text.match(pattern);return match?match[0].replace(/\s+/g," ").trim():""}
-function researchPublishedDate(source){const raw=String(source.publishedAt||source.publishedLabel||"").trim();if(!raw)return"Tanggal tidak tercantum";const parsed=new Date(raw);return Number.isFinite(parsed.getTime())?parsed.toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"}):raw}
 let shopeeAvailable=false,tokopediaAvailable=false,localTikTokAvailable=false;
 function directMarketSources(data,marketplace){
   const sources=(data&&Array.isArray(data.products)?data.products:[]).map(function(product){
@@ -405,7 +423,7 @@ function mergeMarketSources(webSources,shopeeData,tokopediaData,tiktokData){
   shopeeSources.forEach(add);tokopediaSources.forEach(add);tiktokSources.forEach(add);
   (webSources||[]).filter(function(item){return item.marketplace==="TikTok Shop"}).slice(0,tiktokSources.length?1:3).forEach(add);
   (webSources||[]).filter(function(item){return item.searchPage||item.marketplace!=="Shopee"||Boolean(researchPrice(item))}).forEach(add);
-  return {sources:selected,shopeeCount:selected.filter(function(item){return item.marketplace==="Shopee"&&item.direct}).length,tokopediaCount:selected.filter(function(item){return item.marketplace==="Tokopedia"&&item.direct}).length,tiktokCount:selected.filter(function(item){return item.marketplace==="TikTok Shop"&&item.direct}).length};
+  return {sources:selected};
 }
 async function configureLocalMarketplaceSearch(){
   const results=await Promise.allSettled([api("/api/integrations?platform=shopee"),api("/api/integrations?platform=tokopedia"),api("/api/integrations?platform=tiktokshop")]);
@@ -447,12 +465,7 @@ qs("#searchForm").addEventListener("submit",async function(e){
     const searchFallback=sources.every(function(item){return Boolean(item.searchPage)});
     const notes=[];
     if(webData&&webData.summary)notes.push(webData.summary);
-    if(searchFallback&&!notes.length)notes.push("Belum ditemukan listing spesifik yang terindeks. Tautan di bawah membuka pencarian langsung; cek harga dan stok pada halaman marketplace.");
-    const directCounts=[];
-    if(merged.shopeeCount)directCounts.push((shopeeData&&shopeeData.provider==="Bright Data MCP"?"Shopee Bright Data":"Shopee Apify")+": "+merged.shopeeCount);
-    if(merged.tokopediaCount)directCounts.push((tokopediaData&&tokopediaData.provider==="Tokopedia MCP GitHub"?"Tokopedia MCP GitHub":tokopediaData&&tokopediaData.provider==="Apify MCP"?"Tokopedia Apify":"Tokopedia MCP lokal")+": "+merged.tokopediaCount);
-    if(merged.tiktokCount)directCounts.push("TikTok Shop Nexscope: "+merged.tiktokCount+(tiktokData&&tiktokData.creditsUsed?" ("+tiktokData.creditsUsed+" kredit)":""));
-    if(directCounts.length)notes.push("Sumber langsung — "+directCounts.join(" · "));
+    if(searchFallback&&!notes.length)notes.push("Belum ditemukan listing spesifik yang terindeks. Klik nama sumber untuk membuka pencarian dan cek harga serta stok di marketplace.");
     if(shopeeAvailable&&shopeeResult.status==="rejected")notes.push("Pencarian Shopee langsung gagal; listing Shopee terindeks yang mencantumkan harga tetap ditampilkan bila tersedia.");
     if(tokopediaAvailable&&tokopediaResult.status==="rejected")notes.push("Pencarian Tokopedia langsung gagal; listing Tokopedia terindeks tetap ditampilkan bila tersedia.");
     if(localTikTokAvailable&&tiktokResult.status==="rejected")notes.push("TikTok Shop Nexscope gagal; hasil publik terindeks tetap ditampilkan bila tersedia.");
@@ -467,15 +480,11 @@ qs("#searchForm").addEventListener("submit",async function(e){
       if(source.snippet){const snippet=document.createElement("span");snippet.className="research-snippet";snippet.textContent=source.snippet;listing.appendChild(snippet)}
       const price=document.createElement("td");price.className="research-price";
       const priceText=researchPrice(source);price.textContent=source.searchPage?"Cek di halaman":priceText||"Harga tidak tercantum";if(!priceText&&!source.searchPage)price.classList.add("is-missing");
-      const specs=document.createElement("td");specs.className="research-specs";const specList=Array.isArray(source.specs)?source.specs.filter(Boolean):[];specs.textContent=source.searchPage?"—":specList.length?specList.join(" · "):"Spesifikasi tidak tercantum";if(!specList.length&&!source.searchPage)specs.classList.add("is-missing");
-      const condition=document.createElement("td");condition.className="research-condition";condition.textContent=source.searchPage?"—":source.condition||"Tidak disebutkan";if(!source.condition&&!source.searchPage)condition.classList.add("is-missing");
       const provider=document.createElement("td");provider.className="research-source";
-      const action=document.createElement("td");
       let url;try{url=new URL(source.url);if(!/^https?:$/.test(url.protocol))url=null}catch{url=null}
-      provider.textContent=source.searchPage?"Pencarian langsung":source.marketplace||(url?url.hostname.replace(/^www\./,""):"Sumber web");
-      const sourceDate=document.createElement("small");sourceDate.textContent=source.searchPage?"Listing belum diverifikasi":"Rilis: "+researchPublishedDate(source);provider.appendChild(sourceDate);
-      if(url){const link=document.createElement("a");link.className="research-link";link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent="Buka ↗";link.setAttribute("aria-label","Buka sumber "+(source.title||"listing"));action.appendChild(link)}
-      row.append(number,listing,price,specs,condition,provider,action);tableBody.appendChild(row);
+      const sourceLabel=source.searchPage?"Pencarian langsung":source.marketplace||(url?url.hostname.replace(/^www\./,""):"Sumber web");
+      if(url){const link=document.createElement("a");link.className="research-source-link";link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=sourceLabel;link.title="Buka "+sourceLabel;link.setAttribute("aria-label","Buka sumber "+(source.title||sourceLabel));provider.appendChild(link)}else provider.textContent=sourceLabel;
+      row.append(number,listing,price,provider);tableBody.appendChild(row);
     });
     result.hidden=false;
     const names=Array.from(new Set(sources.map(function(item){return item.marketplace}).filter(Boolean)));
@@ -488,13 +497,12 @@ const date=new Date();qs("#todayLabel").textContent=date.toLocaleDateString("id-
 loadIntegrations();pageNotice();configureLocalMarketplaceSearch();
 </script>
 <style>
-.research-table{min-width:1030px}
+.research-table{min-width:650px}
 .research-table .research-price{min-width:125px}
-.research-table .research-specs{min-width:160px;max-width:220px;line-height:1.5}
-.research-table .research-condition{min-width:100px;white-space:nowrap}
-.research-table .research-price.is-missing,.research-table .research-specs.is-missing,.research-table .research-condition.is-missing{color:var(--muted);font-weight:500}
-.research-table .research-source{min-width:155px;max-width:190px}
-.research-table .research-source small{display:block;margin-top:4px;color:var(--muted);font-size:10px}
+.research-table .research-source{min-width:120px;max-width:190px}
+.research-source-link{color:var(--mint);text-decoration:none;transition:color .15s ease,text-shadow .15s ease}
+.research-source-link:hover,.research-source-link:focus-visible{color:#fff;text-decoration:underline;text-underline-offset:3px;text-shadow:0 0 9px rgba(65,239,196,.7)}
+#researchButton{color:#fff;text-shadow:0 0 9px rgba(65,239,196,.75),0 1px 2px rgba(0,0,0,.35)}
 .shopee-product strong{display:block;overflow-wrap:anywhere}
 .shopee-price{display:block;margin-top:4px;color:var(--mint);font-size:14px}
 .shopee-product small{display:block;margin:4px 0;color:var(--muted)}
