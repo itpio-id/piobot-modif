@@ -61,7 +61,8 @@ async function searchProducts(query) {
   const result = await runActor(ACTOR_ID, {
     keywords: [query],
     country: "ID",
-    sort: "relevance"
+    sort: "relevance",
+    maxItems: 5
   }, { waitSecs: 40 });
   const products = normalizeProducts(result.items);
   if (!products.length) {

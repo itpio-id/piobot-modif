@@ -2,8 +2,10 @@ const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
-const packageRoot = path.resolve(__dirname, "..", "..", ".tokopedia-runtime", "node_modules", "@bintangtimurlangit", "tokopedia-mcp");
-const entryPoint = path.join(packageRoot, "build", "index.js");
+const localEntryPoint = path.resolve(__dirname, "..", "..", ".tokopedia-runtime", "node_modules", "@bintangtimurlangit", "tokopedia-mcp", "build", "index.js");
+let deployedEntryPoint = "";
+try { deployedEntryPoint = require.resolve("@bintangtimurlangit/tokopedia-mcp"); } catch {}
+const entryPoint = process.env.VERCEL === "1" ? deployedEntryPoint : fs.existsSync(localEntryPoint) ? localEntryPoint : deployedEntryPoint;
 const pending = new Map();
 let child = null;
 let initialized = false;
@@ -142,7 +144,7 @@ async function searchProducts(query) {
   const properties = tool.inputSchema && tool.inputSchema.properties || {};
   const args = { query };
   if (Object.prototype.hasOwnProperty.call(properties, "page")) args.page = 1;
-  if (Object.prototype.hasOwnProperty.call(properties, "rows")) args.rows = 10;
+  if (Object.prototype.hasOwnProperty.call(properties, "rows")) args.rows = 5;
   if (Object.prototype.hasOwnProperty.call(properties, "orderBy")) args.orderBy = 23;
 
   const response = await rpc("tools/call", { name: "search_products", arguments: args }, 45000);

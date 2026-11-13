@@ -1,0 +1,11 @@
+{
+  "name": "piobot-app",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "dependencies": {
+    "@bintangtimurlangit/tokopedia-mcp": "2.1.0"
+  }
+}

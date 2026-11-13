@@ -5,7 +5,8 @@
       "maxDuration": 60
     },
     "api/integrations.js": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "node_modules/**"
     }
   },
   "rewrites": [

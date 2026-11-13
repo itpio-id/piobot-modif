@@ -1,6 +1,7 @@
 .vercel
 .env*
 piosales-app/node_modules/
+node_modules/
 piosales-app/.vite-cache/
 piosales-app/*.tsbuildinfo
 .shopee-runtime/
