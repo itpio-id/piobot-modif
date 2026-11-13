@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0c1115">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/piobot-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/piobot-180.png">
 <title>PioBot Workspace — ITPIO</title>
 <meta name="description" content="Workspace digital ITPIO untuk chat, jadwal, materi, ClickUp, dan riset harga.">
 <style>
@@ -29,6 +32,7 @@ button,input,textarea,select{font:inherit}button,a{ -webkit-tap-highlight-color:
 .page-title{padding:20px 3px 18px}.page-title h1{font:clamp(27px,3vw,38px)/1.1 "Aptos Display","Trebuchet MS",system-ui,sans-serif;letter-spacing:-.05em;margin:6px 0}.page-title p{color:var(--muted);margin:7px 0 0}.module-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.72fr);gap:13px}.module-wide{grid-column:1/-1}
 .search-box{display:flex;gap:8px}.search-box input{min-width:0;flex:1;background:#0b1216;border:1px solid #304149;color:var(--ink);border-radius:11px;padding:12px;outline:none}.search-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.search-links a{border:1px solid #304149;border-radius:10px;padding:9px 12px;color:#bfd0d2;font-size:12px}.search-links a:hover{border-color:var(--mint);color:var(--mint)}.callout{border-left:2px solid var(--mint);padding:10px 13px;color:var(--muted);font-size:12px;background:#152321;border-radius:0 10px 10px 0;margin-top:15px}
 .upload-pick{padding:13px;border:1px dashed #3c555d;border-radius:12px;background:#0d151a}.upload-pick input{padding:9px}.drive-search{margin:13px 0}.research-result{margin-top:17px}.research-summary{white-space:pre-wrap;line-height:1.7;margin:12px 0}.market-result{padding:12px 13px;background:#141f25;border:1px solid #25353d;border-radius:12px}.market-result strong{display:block;font-size:13px}.market-result small{display:block;color:var(--muted);font-size:11px;margin:4px 0}.market-result p{margin:6px 0 0;color:#bccacc;font-size:12px}.market-result a{color:var(--mint)}.attachment-tools{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}.attachment-tools input{display:none}.attachment-tools .btn{display:inline-flex;align-items:center;gap:6px}.attachment-name{color:var(--muted);font-size:12px;overflow-wrap:anywhere}.list-item .file-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.research-table-wrap{max-width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--list-bg)}.research-table{width:100%;min-width:690px;border-collapse:collapse;text-align:left}.research-table th{padding:10px 12px;background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}.research-table td{padding:12px;border-top:1px solid var(--line);vertical-align:top;font-size:12px}.research-table tbody tr:hover{background:var(--hover)}.research-table .research-index{width:44px;color:var(--muted);font-weight:700}.research-table .research-listing{min-width:270px}.research-table .research-listing strong{display:block;color:var(--ink);font-size:13px;line-height:1.4;overflow-wrap:anywhere}.research-table .research-snippet{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin-top:5px;color:var(--muted);font-size:11px;line-height:1.45;overflow-wrap:anywhere}.research-table .research-price{min-width:115px;color:var(--mint);font-weight:700;white-space:nowrap}.research-table .research-price.is-missing{color:var(--muted);font-weight:500}.research-table .research-source{max-width:145px;color:var(--muted);overflow-wrap:anywhere}.research-table .research-link{color:var(--mint);font-weight:700;white-space:nowrap;text-decoration:underline;text-underline-offset:2}
 .integration-note{margin:13px 0;padding:12px 14px;border:1px solid #4b4031;background:#211d17;border-radius:12px;color:#d8c5a8;font-size:12px}.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);opacity:0;pointer-events:none;transition:.25s;background:#ecf7f2;color:#10201a;padding:11px 17px;border-radius:12px;box-shadow:0 12px 40px #0007;z-index:10}.toast.show{opacity:1;transform:translate(-50%,0)}
 .footer{color:#71858b;text-align:center;font:10px ui-monospace,monospace;padding:18px 5px 6px;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}.footer a{color:inherit;text-decoration:none}.footer a:hover{color:var(--mint);text-decoration:underline}.mobile-top{display:none}.mobile-menu-toggle,.mobile-menu-close,.sidebar-backdrop{display:none}
 @media(max-width:1180px){.layout{grid-template-columns:205px minmax(0,1fr)}.rail{position:static;grid-column:2;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:none}.rail-title,.rail-note,.rail-divider{grid-column:1/-1}.connect-card{margin:0}.workarea{grid-column:2;grid-row:1}}
@@ -37,8 +41,8 @@ button,input,textarea,select{font:inherit}button,a{ -webkit-tap-highlight-color:
   .brand-mark,.avatar-sm,.chat-avatar{overflow:hidden;padding:0}.brand-mark img,.avatar-sm img,.chat-avatar img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 10%}
 /* Workspace layout, theme tokens, and accessible theme switch */
 :root{--accent-soft:#152a2a;--active-border:#23413e;--input-bg:#0b1216;--soft-border:#304149;--callout-bg:#152321;--list-bg:#141f25;--hover:#172329}
-:root[data-theme="light"]{color-scheme:light;--bg:#f2f6f7;--surface:#fff;--surface2:#f3f7f8;--line:#d5e0e3;--ink:#182b32;--muted:#4d626a;--mint:#087f66;--blue:#347ac4;--gold:#835710;--danger:#b73530;--accent-soft:#e4f4ef;--active-border:#b6dbd1;--input-bg:#fbfcfd;--soft-border:#c7d5d9;--callout-bg:#eaf4f1;--list-bg:#f7f9fa;--hover:#eef3f4}
-:root[data-theme="dark"]{color-scheme:dark}
+:root[data-theme="light"]{color-scheme:light;--bg:#f2f6f7;--surface:#fff;--surface2:#f3f7f8;--line:#d5e0e3;--ink:#182b32;--muted:#4d626a;--mint:#087f66;--blue:#347ac4;--gold:#835710;--danger:#b73530;--accent-soft:#e4f4ef;--active-border:#b6dbd1;--input-bg:#fbfcfd;--soft-border:#c7d5d9;--callout-bg:#eaf4f1;--list-bg:#f7f9fa;--hover:#eef3f4;--piosales-frame-bg:#f4f6f9}
+:root[data-theme="dark"]{color-scheme:dark;--piosales-frame-bg:#0b111b}
 body{transition:background-color .2s ease,color .2s ease}
 :root[data-theme="light"] body{background:radial-gradient(ellipse at 45% -18%,#e1f2ec 0,transparent 42%),var(--bg)}
 .layout{grid-template-columns:256px minmax(0,1fr);gap:14px}
@@ -76,6 +80,61 @@ body.menu-open{overflow:hidden}
 @media(max-width:760px){.layout{display:block;padding:8px}.topbar{padding:8px 10px;min-height:58px;gap:6px}.topbar-brand{gap:7px}.topbar-brand .eyebrow{max-width:120px;overflow:hidden;text-overflow:ellipsis}.topbar-info{flex:0 1 auto}.topbar-info strong{font-size:12px}.top-actions{gap:5px}.mobile-menu-toggle{display:inline-grid}.sidebar{position:fixed;inset:8px 8px 8px auto;z-index:30;width:min(320px,calc(100vw - 40px));height:auto;min-height:0;max-height:calc(100dvh - 16px);overflow-y:auto;padding:16px 13px;margin:0;border-radius:var(--radius);background:var(--surface);box-shadow:0 24px 70px #0008;transform:translateX(calc(100% + 24px));transition:transform .22s ease}.sidebar.menu-open{transform:translateX(0)}.brand{padding:1px 5px 15px}.brand small{display:block}.mobile-menu-close{display:inline-grid;margin-left:auto}.nav-label{display:block}.nav{display:grid;grid-template-columns:1fr;overflow:visible;gap:4px}.nav button{width:100%;min-width:0;min-height:44px;padding:9px 11px;white-space:normal;flex:initial}.side-integrations{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:16px}.side-integrations-title,.contact-link{grid-column:1/-1}.side-integrations-title{padding:2px 5px}.connect-card{padding:9px}.connect-top{gap:7px}.service-icon{display:none}.connect-card .btn{padding:8px 7px;font-size:11px}.connection-meta .state{font-size:10px}.connection-identity{font-size:9px}.contact-link{margin-top:3px}.sidebar-backdrop{display:block;position:fixed;inset:0;z-index:20;width:100%;height:100%;padding:0;border:0;border-radius:0;background:#03090dc4;backdrop-filter:blur(2px)}.sidebar-backdrop[hidden]{display:none}.intro{padding:20px 4px}.intro h1{font-size:34px}.split,.module-grid{grid-template-columns:1fr}.module-wide{grid-column:auto}.rail{margin-top:12px;display:block;padding:13px}.messages{height:320px;padding:13px}.chatbox{min-height:480px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.form-actions .btn{flex:1}.search-box{flex-wrap:wrap}.search-box input{flex-basis:100%}.footer{padding-bottom:28px}}
 @media(max-width:390px){.layout{padding:7px}.topbar{gap:3px;padding:8px}.topbar-brand{gap:5px}.topbar-brand .eyebrow{max-width:100px;font-size:11px}.topbar-info strong{font-size:11px}.top-actions{gap:0}.theme-toggle,.mobile-menu-toggle{width:44px;min-width:44px;height:44px}}
 </style>
+<style>
+body.piosales-view .layout{grid-template-columns:180px minmax(0,1fr);gap:12px;padding:12px}
+body.piosales-view .sidebar{padding-left:9px;padding-right:9px}
+body.piosales-view .brand{gap:8px;padding-left:4px;padding-right:4px}
+body.piosales-view .nav button{gap:8px;padding-left:8px;padding-right:8px}
+body.piosales-view .side-integrations{display:none}
+body.piosales-view .rail{display:none}
+body.piosales-view #screen-piosales.active{display:block;height:calc(100dvh - 118px);min-height:620px;padding:0;overflow:hidden}
+body.piosales-view #piosalesFrame{display:block;width:100%;height:100%;min-height:620px;border:0;border-radius:14px;background:var(--piosales-frame-bg,#f4f6f9)}
+body.piosales-view .footer{display:none}
+@media(max-width:760px){
+  body.piosales-view{height:100dvh;overflow:hidden}
+  body.piosales-view .layout{height:100dvh;min-height:0;padding:0}
+  body.piosales-view .workarea{display:flex;flex-direction:column;height:100%;min-height:0}
+  body.piosales-view .topbar{flex:0 0 auto;min-height:60px;margin:0;padding:8px;border-width:0 0 1px;border-radius:0}
+  body.piosales-view .topbar-brand{flex:1 1 auto;gap:6px}
+  body.piosales-view .topbar-brand .eyebrow{max-width:none;flex:0 0 auto;font-size:12px;white-space:nowrap}
+  body.piosales-view .topbar-avatar{width:30px;height:30px;flex-basis:30px}
+  body.piosales-view .topbar-info{display:none}
+  body.piosales-view #mainContent{display:flex;flex:1 1 auto;flex-direction:column;min-height:0}
+  body.piosales-view #screen-piosales.active{flex:1 1 auto;height:auto;min-height:0;border-radius:0;animation:none}
+  body.piosales-view #piosalesFrame{height:100%;min-height:0;border-radius:0}
+}
+</style>
+<style>
+.topbar-copy{display:flex;align-items:center;gap:7px;min-width:0}
+.topbar-module{display:none}
+body.piosales-view.piosales-compact .topbar-module{display:block;max-width:130px;padding-left:7px;border-left:1px solid var(--line);color:var(--muted);font:500 10px/1.3 system-ui,sans-serif}
+@media(min-width:1000px){
+  .layout{display:block;min-height:100vh}
+  .sidebar{display:none}
+  .topbar{gap:9px;padding:10px 14px}
+  .topbar-brand{flex:0 0 auto;gap:7px}
+  .topbar-brand .eyebrow{white-space:nowrap}
+  .topbar-nav-slot{min-width:0;flex:1 1 auto}
+  .topbar-nav-slot .nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+  .topbar-nav-slot .nav::-webkit-scrollbar{display:none}
+  .topbar-nav-slot .nav button{width:auto;min-height:40px;flex:0 0 auto;gap:6px;padding:7px 8px;font-size:12px;white-space:nowrap}
+  .topbar-nav-slot .nav-icon{width:auto;font-size:14px}
+  .topbar-info{flex:0 1 auto;max-width:190px;margin-left:auto}
+  .topbar-info strong{font-size:12px}
+  .top-actions{gap:6px}
+  .topbar-tools{position:relative;flex:0 0 auto}
+  .topbar-tools summary{display:inline-flex;align-items:center;justify-content:center;min-height:40px;list-style:none}
+  .topbar-tools summary::-webkit-details-marker{display:none}
+  .topbar-connections{position:absolute;top:calc(100% + 10px);right:0;z-index:40;width:min(340px,90vw);max-height:min(75vh,680px);overflow:auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:0 18px 50px #0004}
+  .topbar-connections .side-integrations{display:grid;grid-template-columns:1fr;gap:8px;margin:0}
+  .topbar-connections .side-integrations-title{padding:2px 4px 4px}
+  .topbar-connections .contact-link{display:flex;margin-top:8px}
+  body.piosales-view .layout{grid-template-columns:minmax(0,1fr);padding:16px}
+  body.piosales-view .topbar-connections .side-integrations{display:grid}
+}
+@media(max-width:999px){.topbar-tools{display:none}}
+</style>
+<link rel="stylesheet" href="/assets/blueprint.css">
 </head>
 <body>
 <a class="skip-link" href="#mainContent">Lewati ke konten</a>
@@ -83,11 +142,13 @@ body.menu-open{overflow:hidden}
   <aside class="sidebar" id="workspaceSidebar" aria-label="Menu workspace">
     <div class="brand"><div class="brand-mark"><img src="/assets/agentpio-avatar.jpeg" alt="Avatar AgentPio"></div><div><strong>PioBot</strong><small>ITPIO workspace</small></div><button type="button" class="btn ghost mobile-menu-close" id="menuClose" aria-label="Tutup menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
     <div class="nav-label">Workspace</div>
-    <nav class="nav" aria-label="Navigasi workspace">
+    <nav class="nav" id="workspaceNav" aria-label="Navigasi workspace">
       <button class="active" data-view="chat"><span class="nav-icon">✳</span>Asisten</button>
       <button data-view="calendar"><span class="nav-icon">◷</span>Kalender</button>
       <button data-view="clickup"><span class="nav-icon">⌑</span>ClickUp + Drive</button>
       <button data-view="research"><span class="nav-icon">⌕</span>Riset harga</button>
+      <button data-view="piosales"><span class="nav-icon">▤</span>PioSales</button>
+      <button data-view="blueprint"><span class="nav-icon">⌘</span>Blueprint</button>
     </nav>
     <section class="side-integrations" aria-label="Koneksi workspace">
       <div class="side-integrations-title">Koneksi workspace</div>
@@ -97,7 +158,19 @@ body.menu-open{overflow:hidden}
     <a class="btn ghost smallbtn contact-link" href="https://wa.me/6283125299879" target="_blank" rel="noopener">Hubungi ITPIO ↗</a>
   </aside>
   <div class="workarea">
-    <header class="topbar"><div class="topbar-brand"><div class="avatar-sm topbar-avatar"><img src="/assets/agentpio-avatar.jpeg" alt="Avatar PioBot"></div><div class="eyebrow">PioAssistant Cowork</div></div><div class="topbar-info"><strong id="todayLabel">Satu ruang untuk pekerjaan harian</strong></div><div class="top-actions"><button type="button" class="btn ghost mobile-menu-toggle" id="menuToggle" aria-label="Buka menu workspace" aria-controls="workspaceSidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><button type="button" class="btn ghost theme-toggle" id="themeToggle" aria-label="Aktifkan mode terang" aria-pressed="false" title="Aktifkan mode terang"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l-1.42 1.42m11.3-11.3 1.42-1.42"/></svg></button></div></header>
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="avatar-sm topbar-avatar"><img src="/assets/agentpio-avatar.jpeg" alt="Avatar PioBot"></div>
+        <div class="topbar-copy"><div class="eyebrow">PioAssistant</div><span class="topbar-module">Invoice Generator by ITPIO</span></div>
+      </div>
+      <div class="topbar-nav-slot" id="topbarNavSlot"></div>
+      <div class="topbar-info"><strong id="todayLabel">Satu ruang untuk pekerjaan harian</strong></div>
+      <div class="top-actions">
+        <button type="button" class="btn ghost mobile-menu-toggle" id="menuToggle" aria-label="Buka menu workspace" aria-controls="workspaceSidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+        <details class="topbar-tools" id="topbarConnections"><summary class="btn ghost smallbtn">Koneksi</summary><div class="topbar-connections" id="topbarConnectionsSlot"></div></details>
+        <button type="button" class="btn ghost theme-toggle" id="themeToggle" aria-label="Aktifkan mode terang" aria-pressed="false" title="Aktifkan mode terang"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l-1.42 1.42m11.3-11.3 1.42-1.42"/></svg></button>
+      </div>
+    </header>
     <main id="mainContent">
       <section class="screen active" id="screen-chat">
         <div class="intro"><div class="tag"><span class="dot"></span>Digital teammate · Active 24/7</div><h1>Halo, ITPIO.<br>Mulai dari yang perlu dibereskan.</h1><p>PioBot membantu menyiapkan jadwal, merapikan materi, menyimpan catatan, dan mengubah pekerjaan berulang jadi alur yang lebih ringan.</p></div>
@@ -121,9 +194,15 @@ body.menu-open{overflow:hidden}
       </section>
       <section class="screen" id="screen-research">
         <div class="page-title"><div class="eyebrow">MARKET INTELLIGENCE / INDONESIA</div><h1>Riset harga bersama PioBot.</h1><p>PioBot mencari listing terbaru dan merangkum kisaran harga langsung di halaman ini.</p></div>
-        <div class="module-grid"><div class="card module-wide"><h2>Cari produk atau spesifikasi</h2><p class="muted small">Contoh: ThinkPad T14 Gen 3 bekas, RAM 16 GB, Surabaya.</p><form id="searchForm"><div class="search-box"><input id="searchQuery" maxlength="180" required placeholder="Merek, model, kondisi, dan lokasi"><button class="btn" id="researchButton">Riset harga</button></div></form><div class="statusline" id="researchStatus" aria-live="polite"></div><div class="research-result" id="researchResult" hidden><h3>Ringkasan PioBot</h3><div class="research-summary" id="researchSummary"></div><h3>Listing dan sumber</h3><div class="list" id="marketResults"></div></div><div class="callout">PioBot menampilkan ringkasan dan tautan sumber di sini. Harga listing dapat berubah; periksa kondisi dan tanggal sebelum membuat penawaran.</div></div></div>
+        <div class="module-grid"><div class="card module-wide"><h2>Cari produk atau spesifikasi</h2><p class="muted small">Contoh: ThinkPad T14 Gen 3 bekas, RAM 16 GB, Surabaya.</p><form id="searchForm"><div class="search-box"><input id="searchQuery" maxlength="180" required placeholder="Merek, model, kondisi, dan lokasi"><button class="btn" id="researchButton">Riset harga market</button></div></form><div class="statusline" id="researchStatus" aria-live="polite"></div><div class="research-result" id="researchResult" hidden><h3>Ringkasan riset</h3><div class="research-summary" id="researchSummary"></div><h3 id="researchListingTitle">Listing marketplace</h3><div class="research-table-wrap" role="region" aria-label="Tabel listing riset harga" tabindex="0"><table class="research-table"><thead><tr><th scope="col">No.</th><th scope="col">Listing</th><th scope="col">Harga</th><th scope="col">Spesifikasi</th><th scope="col">Kondisi</th><th scope="col">Sumber / rilis tanggal</th><th scope="col">Tautan</th></tr></thead><tbody id="marketResults"></tbody></table></div></div><div class="callout">Satu kali pencarian menggabungkan listing publik terindeks dari Shopee, Tokopedia, dan TikTok Shop. jika ada kendala hubungi itpio.id</div></div></div>
       </section>
-      <div class="footer"><a href="https://www.itpio.id" target="_blank" rel="noopener">www.itpio.id</a><span>·</span><span>TikTok/IG: <a href="https://www.tiktok.com/@itpio.id" target="_blank" rel="noopener">@itpio.id</a></span><span>·</span><a href="mailto:itpio@itpio.id">Email: itpio@itpio.id</a></div>
+      <section class="screen" id="screen-piosales" aria-label="PioSales">
+        <iframe id="piosalesFrame" title="PioSales — Invoice Generator by ITPIO" src="/piosales/?embedded=piobot" loading="lazy" referrerpolicy="same-origin"></iframe>
+      </section>
+      <section class="screen blueprint-screen" id="screen-blueprint" aria-labelledby="blueprintTitle">
+        <div id="blueprint-root"></div>
+      </section>
+      <div class="footer"><a href="https://www.itpio.id" target="_blank" rel="noopener">www.itpio.id</a><span>·</span><span>TikTok: <a href="https://www.tiktok.com/@itpio.id" target="_blank" rel="noopener">@itpio.id</a></span><span>·</span><span>Instagram: <a href="https://www.instagram.com/itpioid/" target="_blank" rel="noopener">@itpioid</a></span><span>·</span><a href="mailto:itpio@itpio.id">Email: itpio@itpio.id</a></div>
     </main>
   </div>
 </div>
@@ -133,11 +212,16 @@ body.menu-open{overflow:hidden}
 const qs=function(s){return document.querySelector(s)};
 const messages=qs("#messages"),chatInput=qs("#chatInput"),sendButton=qs("#sendButton"),apiStatus=qs("#apiStatus"),toast=qs("#toast");
 const historyMessages=[];
-function applyTheme(theme){const light=theme==="light";document.documentElement.dataset.theme=light?"light":"dark";const button=qs("#themeToggle"),label=light?"Aktifkan mode gelap":"Aktifkan mode terang";button.innerHTML=light?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>';button.setAttribute("aria-label",label);button.setAttribute("title",label);button.setAttribute("aria-pressed",String(light));qs('meta[name="theme-color"]').content=light?"#f2f6f7":"#0c1115"}
-let savedTheme="dark";try{savedTheme=localStorage.getItem("piobot-theme")||"dark"}catch{}applyTheme(savedTheme);qs("#themeToggle").addEventListener("click",function(){const next=document.documentElement.dataset.theme==="light"?"dark":"light";applyTheme(next);try{localStorage.setItem("piobot-theme",next)}catch{}});
-const workspaceSidebar=qs("#workspaceSidebar"),menuToggle=qs("#menuToggle"),menuClose=qs("#menuClose"),menuBackdrop=qs("#menuBackdrop"),mobileMenuQuery=window.matchMedia("(max-width:760px)");
+function applyTheme(theme){const light=theme==="light";document.documentElement.dataset.theme=light?"light":"dark";const button=qs("#themeToggle"),label=light?"Aktifkan mode gelap":"Aktifkan mode terang";button.innerHTML=light?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l-1.42 1.42m11.3-11.3 1.42-1.42"/></svg>';button.setAttribute("aria-label",label);button.setAttribute("title",label);button.setAttribute("aria-pressed",String(light));qs('meta[name="theme-color"]').content=light?"#f2f6f7":"#0c1115"}
+function syncPioSalesTheme(){const frame=qs("#piosalesFrame");if(!frame||!frame.contentWindow)return;try{frame.contentWindow.postMessage({type:"piobot-theme",theme:document.documentElement.dataset.theme||"dark"},location.origin)}catch{}}
+window.addEventListener("message",function(event){if(event.origin===location.origin&&event.source===qs("#piosalesFrame").contentWindow&&event.data&&event.data.type==="piosales-ready")syncPioSalesTheme()});
+function syncPioSalesHeader(){const width=qs("#piosalesFrame").clientWidth;document.body.classList.toggle("piosales-compact",width>0&&width<=760)}
+const piosalesHeaderObserver=new ResizeObserver(syncPioSalesHeader);piosalesHeaderObserver.observe(qs("#piosalesFrame"));
+let savedTheme="dark";try{savedTheme=localStorage.getItem("piobot-theme")||"dark"}catch{}applyTheme(savedTheme);syncPioSalesTheme();qs("#themeToggle").addEventListener("click",function(){const next=document.documentElement.dataset.theme==="light"?"dark":"light";applyTheme(next);syncPioSalesTheme();try{localStorage.setItem("piobot-theme",next)}catch{}});
+const workspaceSidebar=qs("#workspaceSidebar"),workspaceNav=qs("#workspaceNav"),topbarNavSlot=qs("#topbarNavSlot"),sideIntegrations=qs(".side-integrations"),contactLink=qs(".contact-link"),topbarConnectionsSlot=qs("#topbarConnectionsSlot"),topbarConnections=qs("#topbarConnections"),menuToggle=qs("#menuToggle"),menuClose=qs("#menuClose"),menuBackdrop=qs("#menuBackdrop"),mobileMenuQuery=window.matchMedia("(max-width:760px)"),desktopNavQuery=window.matchMedia("(min-width:1000px)");
 function setMenuOpen(open,restoreFocus){const mobile=mobileMenuQuery.matches,visible=mobile&&open,workarea=qs(".workarea");workspaceSidebar.classList.toggle("menu-open",visible);workspaceSidebar.inert=mobile&&!visible;workspaceSidebar.setAttribute("aria-hidden",String(mobile&&!visible));workarea.inert=visible;workarea.setAttribute("aria-hidden",String(visible));menuToggle.setAttribute("aria-expanded",String(visible));menuToggle.setAttribute("aria-label",visible?"Tutup menu workspace":"Buka menu workspace");menuBackdrop.hidden=!visible;document.body.classList.toggle("menu-open",visible);if(visible)menuClose.focus({preventScroll:true});else if(restoreFocus&&mobile)menuToggle.focus({preventScroll:true})}
-menuToggle.addEventListener("click",function(){setMenuOpen(!workspaceSidebar.classList.contains("menu-open"))});menuClose.addEventListener("click",function(){setMenuOpen(false,true)});menuBackdrop.addEventListener("click",function(){setMenuOpen(false,true)});document.addEventListener("keydown",function(event){if(event.key==="Escape"&&workspaceSidebar.classList.contains("menu-open"))setMenuOpen(false,true)});mobileMenuQuery.addEventListener("change",function(){setMenuOpen(false)});setMenuOpen(false);
+function syncWorkspaceLayout(){setMenuOpen(false);if(desktopNavQuery.matches){topbarNavSlot.append(workspaceNav);topbarConnectionsSlot.append(sideIntegrations,contactLink);topbarConnections.open=false;workspaceSidebar.inert=true;workspaceSidebar.setAttribute("aria-hidden","true")}else{workspaceSidebar.append(sideIntegrations,contactLink);workspaceSidebar.insertBefore(workspaceNav,sideIntegrations);topbarConnections.open=false}}
+menuToggle.addEventListener("click",function(){setMenuOpen(!workspaceSidebar.classList.contains("menu-open"))});menuClose.addEventListener("click",function(){setMenuOpen(false,true)});menuBackdrop.addEventListener("click",function(){setMenuOpen(false,true)});document.addEventListener("keydown",function(event){if(event.key==="Escape"&&workspaceSidebar.classList.contains("menu-open"))setMenuOpen(false,true)});mobileMenuQuery.addEventListener("change",syncWorkspaceLayout);desktopNavQuery.addEventListener("change",syncWorkspaceLayout);syncWorkspaceLayout();qs("#piosalesFrame").addEventListener("load",syncPioSalesTheme);
 let busy=false, googleConnected=false, clickupConnected=false, googleConfigured=false, clickupConfigured=false, pendingChatAttachment=null;
 function notify(text){toast.textContent=text;toast.classList.add("show");setTimeout(function(){toast.classList.remove("show")},3400)}
 function safeDate(value){if(!value)return "Waktu belum tersedia";const d=new Date(value);return isNaN(d)?value:d.toLocaleString("id-ID",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}
@@ -156,7 +240,11 @@ qs("#browseDriveForChat").addEventListener("click",function(){qs('.nav button[da
   ["Apa detail yang perlu dikumpulkan untuk riset harga laptop bekas?", "⌕ Riset laptop"]
 ].forEach(function(item){const b=document.createElement("button");b.type="button";b.textContent=item[1];b.addEventListener("click",function(){sendChat(item[0])});qs("#suggestions").appendChild(b)});
 addBubble("assistant","Halo, saya PioBot ✳ Saya siap bantu menyusun jadwal, merapikan materi, dan menyiapkan pekerjaan ITPIO. Apa yang ingin kamu bereskan?");
-document.querySelectorAll(".nav button").forEach(function(button){button.addEventListener("click",function(){document.querySelectorAll(".nav button").forEach(function(x){x.classList.remove("active")});button.classList.add("active");document.querySelectorAll(".screen").forEach(function(x){x.classList.remove("active")});qs("#screen-"+button.dataset.view).classList.add("active");if(button.dataset.view==="calendar")loadCalendar();if(button.dataset.view==="clickup"){loadDrive();if(clickupConnected)loadLists()}if(mobileMenuQuery.matches)setMenuOpen(false,true)})});
+document.querySelectorAll(".nav button").forEach(function(button){button.addEventListener("click",function(){document.querySelectorAll(".nav button").forEach(function(x){x.classList.remove("active")});button.classList.add("active");document.body.classList.toggle("piosales-view",button.dataset.view==="piosales");document.querySelectorAll(".screen").forEach(function(x){x.classList.remove("active")});qs("#screen-"+button.dataset.view).classList.add("active");if(button.dataset.view==="calendar")loadCalendar();if(button.dataset.view==="clickup"){loadDrive();if(clickupConnected)loadLists()}if(mobileMenuQuery.matches)setMenuOpen(false,true)})});
+document.querySelectorAll(".nav button").forEach(function(button){button.addEventListener("click",function(){const route=button.dataset.view==="blueprint"?"/blueprint":"/";if(location.pathname!==route)history.pushState(null,"",route)})});
+window.addEventListener("popstate",function(){const view=location.pathname.replace(/\/+$/,"")==="/blueprint"?"blueprint":"chat";qs('.nav button[data-view="'+view+'"]').click()});
+if(location.pathname.replace(/\/+$/,"")==="/blueprint")qs('.nav button[data-view="blueprint"]').click();
+qs('[data-view="piosales"]').addEventListener("click",syncPioSalesTheme);
 function setState(service,connected,label,configured,disconnectable){const status=qs("#"+service+"State"),identity=qs("#"+service+"Identity");status.textContent=connected?"Terhubung":(configured?"Belum terhubung":"Setup belum lengkap");status.classList.toggle("connected",connected);if(identity){identity.textContent=connected&&label?label:"";identity.hidden=!identity.textContent}qs("#"+service+"Connect").hidden=connected;qs("#"+service+"Disconnect").hidden=!connected||disconnectable===false}
 async function loadIntegrations(){try{const data=await api("/api/integrations");googleConnected=data.google.connected;clickupConnected=data.clickup.connected;googleConfigured=data.google.configured;clickupConfigured=data.clickup.configured;setState("google",googleConnected,data.google.email,googleConfigured);setState("clickup",clickupConnected,data.clickup.user,clickupConfigured,data.clickup.disconnectable);api("/api/chat").then(function(x){apiStatus.textContent=x.configured?"🟢 AgentPio Ready":"⚠️ KIE belum disetel"}).catch(function(){apiStatus.textContent="AI belum tersedia"});if(googleConnected){loadCalendar();loadDrive()}if(clickupConnected)loadLists()}catch(e){setState("google",false,null,false);setState("clickup",false,null,false);apiStatus.textContent="API belum siap"}}
 function connect(service){const ready=service==="google"?googleConfigured:clickupConfigured;if(!ready){notify(service==="google"?"Setup Vercel: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, INTEGRATION_SECRET.":"Setup Vercel: CLICKUP_CLIENT_ID, CLICKUP_CLIENT_SECRET, INTEGRATION_SECRET.");return}location.href="/api/"+service+"/auth"}
@@ -177,9 +265,124 @@ function fileAsBase64(file){return new Promise(function(resolve,reject){const re
 async function loadLists(){const select=qs("#taskList");select.innerHTML='<option value="">Memuat list ClickUp…</option>';try{const data=await api("/api/clickup/tasks");select.replaceChildren();if(!data.lists.length)select.innerHTML='<option value="">Tidak ada list yang diizinkan</option>';data.lists.forEach(function(list){const option=document.createElement("option");option.value=list.id;option.textContent=[list.team,list.space,list.folder,list.name].filter(Boolean).join(" / ");select.appendChild(option)});status("clickupStatus",data.lists.length?data.lists.length+" list siap dipilih.":"Belum ada list yang tersedia.",data.lists.length?"ok":"")}catch(e){select.innerHTML='<option value="">Hubungkan ClickUp untuk memuat list…</option>';status("clickupStatus",e.message,"error")}}
 qs("#loadClickupLists").addEventListener("click",loadLists);
 qs("#taskForm").addEventListener("submit",async function(e){e.preventDefault();if(!clickupConnected){status("clickupStatus","Hubungkan ClickUp terlebih dahulu.","error");return}try{status("clickupStatus","Membuat task…");const data=await api("/api/clickup/tasks",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({listId:qs("#taskList").value,name:qs("#taskName").value,description:qs("#taskDescription").value})});status("clickupStatus","Task dibuat di ClickUp.","ok");e.target.reset();if(data.task&&data.task.url)window.open(data.task.url,"_blank","noopener")}catch(err){status("clickupStatus",err.message,"error")}});
-qs("#searchForm").addEventListener("submit",async function(e){e.preventDefault();const query=qs("#searchQuery").value.trim();if(!query)return;const button=qs("#researchButton"),result=qs("#researchResult");button.disabled=true;button.textContent="Mencari…";result.hidden=true;status("researchStatus","Mencari listing dan meminta PioBot membandingkan harga…");try{const data=await api("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"research",query})});qs("#researchSummary").textContent=data.summary;const list=qs("#marketResults");list.replaceChildren();data.sources.forEach(function(source){const item=document.createElement("div");item.className="market-result";const title=document.createElement("strong");title.textContent=source.title;const meta=document.createElement("small");let host="Sumber web";try{host=new URL(source.url).hostname.replace(/^www\./,"")}catch{}meta.textContent=host;const snippet=document.createElement("p");snippet.textContent=source.snippet||"Buka listing untuk melihat detail produk dan harga.";const link=document.createElement("a");link.href=source.url;link.target="_blank";link.rel="noopener noreferrer";link.textContent="Lihat sumber ↗";item.append(title,meta,snippet,link);list.appendChild(item)});result.hidden=false;status("researchStatus","Riset selesai · "+new Date(data.researchedAt).toLocaleString("id-ID"),"ok")}catch(err){status("researchStatus",err.message,"error")}finally{button.disabled=false;button.textContent="Riset harga"}});
+function researchPrice(source){if(typeof source.price==="string"&&source.price.trim())return source.price.trim();const pattern=/(?:\b(?:Rp\.?\s*|IDR\s*)\d[\d.,]*(?:\s*(?:ribu|rb|juta|jt|miliar))?|\b\d[\d.,]*(?:\s*(?:ribu|rb|juta|jt|miliar))?\s*(?:rupiah|IDR)\b)/i;const text=String(source.title||"")+" "+String(source.snippet||"");const match=text.match(pattern);return match?match[0].replace(/\s+/g," ").trim():""}
+function researchPublishedDate(source){const raw=String(source.publishedAt||source.publishedLabel||"").trim();if(!raw)return"Tanggal tidak tercantum";const parsed=new Date(raw);return Number.isFinite(parsed.getTime())?parsed.toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"}):raw}
+let shopeeAvailable=false,tokopediaAvailable=false,localTikTokAvailable=false;
+function directMarketSources(data,marketplace){
+  const sources=(data&&Array.isArray(data.products)?data.products:[]).map(function(product){
+    const details=marketplace==="Shopee"?[product.snippet||"",product.rating?"Rating "+product.rating:"",product.sold?"Terjual "+product.sold:"",product.location?"Lokasi "+product.location:"",product.discountPercent?"Diskon "+product.discountPercent+"%":product.discountLabel||"",product.originalPrice?"Harga awal "+product.originalPrice:""].filter(Boolean):marketplace==="TikTok Shop"?[product.snippet||"",product.shop?"Toko "+product.shop:""].filter(Boolean):marketplace==="Tokopedia"?[product.rating?"Rating "+product.rating:"",product.shop?"Toko "+product.shop:"",product.sold?"Terjual "+product.sold:"",product.discountPercent?"Diskon "+product.discountPercent+"%":"",product.originalPrice?"Harga awal "+product.originalPrice:""].filter(Boolean):[product.rating?"Rating "+product.rating:"",product.shop?"Toko "+product.shop:""];
+    return {title:product.title||"Listing tanpa judul",url:product.url||"",productId:product.productId||"",snippet:details.filter(Boolean).join(" · "),price:product.price||"",specs:Array.isArray(product.specs)?product.specs:[],condition:product.condition||"",publishedAt:product.availableDate||product.publishedAt||"",publishedLabel:product.availableDate||product.publishedLabel||"",marketplace:marketplace,direct:true};
+  });
+  return marketplace==="Shopee"?sources.filter(function(source){return Boolean(researchPrice(source))}):sources;
+}
+function marketUrlKey(source){try{const url=new URL(source.url);url.hash="";url.search="";return url.href.replace(/\/+$/g,"").toLowerCase()}catch{return source.productId?String(source.marketplace||"")+":"+source.productId:source.title?String(source.marketplace||"")+":"+source.title.toLowerCase()+":"+String(source.price||""):""}}
+function mergeMarketSources(webSources,shopeeData,tokopediaData,tiktokData){
+  const shopeeSources=directMarketSources(shopeeData,"Shopee"),tokopediaSources=directMarketSources(tokopediaData,"Tokopedia"),tiktokSources=directMarketSources(tiktokData,"TikTok Shop");
+  const selected=[],seen=new Set();
+  function add(item){const key=marketUrlKey(item);if(!key||seen.has(key))return;seen.add(key);selected.push(item)}
+  shopeeSources.forEach(add);tokopediaSources.forEach(add);tiktokSources.forEach(add);
+  (webSources||[]).filter(function(item){return item.marketplace==="TikTok Shop"}).slice(0,tiktokSources.length?1:3).forEach(add);
+  (webSources||[]).filter(function(item){return item.searchPage||item.marketplace!=="Shopee"||Boolean(researchPrice(item))}).forEach(add);
+  return {sources:selected,shopeeCount:selected.filter(function(item){return item.marketplace==="Shopee"&&item.direct}).length,tokopediaCount:selected.filter(function(item){return item.marketplace==="Tokopedia"&&item.direct}).length,tiktokCount:selected.filter(function(item){return item.marketplace==="TikTok Shop"&&item.direct}).length};
+}
+async function configureLocalMarketplaceSearch(){
+  const results=await Promise.allSettled([api("/api/integrations?platform=shopee"),api("/api/integrations?platform=tokopedia"),api("/api/integrations?platform=tiktokshop")]);
+  shopeeAvailable=results[0].status==="fulfilled"&&results[0].value.readOnly&&results[0].value.configured&&(results[0].value.remote||results[0].value.localOnly);
+  tokopediaAvailable=results[1].status==="fulfilled"&&results[1].value.readOnly&&results[1].value.configured&&(results[1].value.remote||results[1].value.localOnly);
+  localTikTokAvailable=results[2].status==="fulfilled"&&results[2].value.localOnly&&results[2].value.readOnly&&results[2].value.configured;
+}
+function fallbackMarketSearches(query){
+  return [
+    {marketplace:"Shopee",domain:"shopee.co.id"},
+    {marketplace:"Tokopedia",domain:"tokopedia.com"},
+    {marketplace:"TikTok Shop",domain:"shop.tiktok.com/view/product"}
+  ].map(function(item){
+    const url=new URL("https://www.bing.com/search");
+    url.searchParams.set("q","site:"+item.domain+" "+query+" harga Rp Indonesia");
+    return {title:"Cari “"+query+"” di "+item.marketplace,url:url.href,snippet:"Pencarian langsung untuk memeriksa hasil terbaru.",marketplace:item.marketplace,searchPage:true};
+  });
+}
+qs("#searchForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+  const query=qs("#searchQuery").value.trim();if(!query)return;
+  const button=qs("#researchButton"),result=qs("#researchResult");
+  button.disabled=true;button.textContent="Mencari harga…";result.hidden=true;
+    status("researchStatus","Mencari harga Shopee, Tokopedia, dan TikTok Shop…");
+  try{
+    await configureLocalMarketplaceSearch();
+    const requests=[api("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"research",query})})];
+    if(shopeeAvailable)requests.push(api("/api/integrations?platform=shopee",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query})}));else requests.push(Promise.resolve(null));
+    if(tokopediaAvailable)requests.push(api("/api/integrations?platform=tokopedia",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query})}));else requests.push(Promise.resolve(null));
+    if(localTikTokAvailable)requests.push(api("/api/integrations?platform=tiktokshop",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query})}));else requests.push(Promise.resolve(null));
+    const settled=await Promise.allSettled(requests),webResult=settled[0],shopeeResult=settled[1],tokopediaResult=settled[2],tiktokResult=settled[3];
+    const webData=webResult.status==="fulfilled"?webResult.value:null;
+    const shopeeData=shopeeResult.status==="fulfilled"?shopeeResult.value:null;
+    const tokopediaData=tokopediaResult.status==="fulfilled"?tokopediaResult.value:null;
+    const tiktokData=tiktokResult.status==="fulfilled"?tiktokResult.value:null;
+    const merged=mergeMarketSources(webData&&Array.isArray(webData.sources)?webData.sources:[],shopeeData,tokopediaData,tiktokData);
+    let sources=merged.sources;
+    if(!sources.length)sources=fallbackMarketSearches(query);
+    const searchFallback=sources.every(function(item){return Boolean(item.searchPage)});
+    const notes=[];
+    if(webData&&webData.summary)notes.push(webData.summary);
+    if(searchFallback&&!notes.length)notes.push("Belum ditemukan listing spesifik yang terindeks. Tautan di bawah membuka pencarian langsung; cek harga dan stok pada halaman marketplace.");
+    const directCounts=[];
+    if(merged.shopeeCount)directCounts.push((shopeeData&&shopeeData.provider==="Bright Data MCP"?"Shopee Bright Data":"Shopee Apify")+": "+merged.shopeeCount);
+    if(merged.tokopediaCount)directCounts.push((tokopediaData&&tokopediaData.provider==="Apify MCP"?"Tokopedia Apify":"Tokopedia lokal")+": "+merged.tokopediaCount);
+    if(merged.tiktokCount)directCounts.push("TikTok Shop Nexscope: "+merged.tiktokCount+(tiktokData&&tiktokData.creditsUsed?" ("+tiktokData.creditsUsed+" kredit)":""));
+    if(directCounts.length)notes.push("Sumber langsung — "+directCounts.join(" · "));
+    if(shopeeAvailable&&shopeeResult.status==="rejected")notes.push("Pencarian Shopee langsung gagal; listing Shopee terindeks yang mencantumkan harga tetap ditampilkan bila tersedia.");
+    if(tokopediaAvailable&&tokopediaResult.status==="rejected")notes.push("Pencarian Tokopedia langsung gagal; listing Tokopedia terindeks tetap ditampilkan bila tersedia.");
+    if(localTikTokAvailable&&tiktokResult.status==="rejected")notes.push("TikTok Shop Nexscope gagal; hasil publik terindeks tetap ditampilkan bila tersedia.");
+    qs("#researchSummary").textContent=notes.join("\n\n")||"Harga dari listing marketplace terindeks.";
+    qs("#researchListingTitle").textContent=searchFallback?"Tautan pencarian langsung ("+sources.length+")":"Listing marketplace ("+sources.length+")";
+    const tableBody=qs("#marketResults");tableBody.replaceChildren();
+    sources.forEach(function(source,index){
+      const row=document.createElement("tr");
+      const number=document.createElement("td");number.className="research-index";number.textContent=String(index+1);
+      const listing=document.createElement("td");listing.className="research-listing";
+      const title=document.createElement("strong");title.textContent=source.title||"Listing tanpa judul";listing.appendChild(title);
+      if(source.snippet){const snippet=document.createElement("span");snippet.className="research-snippet";snippet.textContent=source.snippet;listing.appendChild(snippet)}
+      const price=document.createElement("td");price.className="research-price";
+      const priceText=researchPrice(source);price.textContent=source.searchPage?"Cek di halaman":priceText||"Harga tidak tercantum";if(!priceText&&!source.searchPage)price.classList.add("is-missing");
+      const specs=document.createElement("td");specs.className="research-specs";const specList=Array.isArray(source.specs)?source.specs.filter(Boolean):[];specs.textContent=source.searchPage?"—":specList.length?specList.join(" · "):"Spesifikasi tidak tercantum";if(!specList.length&&!source.searchPage)specs.classList.add("is-missing");
+      const condition=document.createElement("td");condition.className="research-condition";condition.textContent=source.searchPage?"—":source.condition||"Tidak disebutkan";if(!source.condition&&!source.searchPage)condition.classList.add("is-missing");
+      const provider=document.createElement("td");provider.className="research-source";
+      const action=document.createElement("td");
+      let url;try{url=new URL(source.url);if(!/^https?:$/.test(url.protocol))url=null}catch{url=null}
+      provider.textContent=source.searchPage?"Pencarian langsung":source.marketplace||(url?url.hostname.replace(/^www\./,""):"Sumber web");
+      const sourceDate=document.createElement("small");sourceDate.textContent=source.searchPage?"Listing belum diverifikasi":"Rilis: "+researchPublishedDate(source);provider.appendChild(sourceDate);
+      if(url){const link=document.createElement("a");link.className="research-link";link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent="Buka ↗";link.setAttribute("aria-label","Buka sumber "+(source.title||"listing"));action.appendChild(link)}
+      row.append(number,listing,price,specs,condition,provider,action);tableBody.appendChild(row);
+    });
+    result.hidden=false;
+    const names=Array.from(new Set(sources.map(function(item){return item.marketplace}).filter(Boolean)));
+    status("researchStatus",searchFallback?"Pencarian siap · "+sources.length+" tautan langsung · "+new Date().toLocaleTimeString("id-ID"):"Riset selesai · "+sources.length+" listing"+(names.length?" · "+names.join(" / "):"")+" · "+new Date().toLocaleTimeString("id-ID"),"ok");
+  }catch(err){status("researchStatus",err.message,"error")}
+  finally{button.disabled=false;button.textContent="Riset harga market"}
+});
 function pageNotice(){const p=new URLSearchParams(location.search);const service=p.get("integration"),s=p.get("status");if(service&&s==="connected")notify(service==="google"?"Google Workspace berhasil terhubung.":"ClickUp berhasil terhubung.");else if(service&&s==="setup")notify("Konfigurasi OAuth "+service+" belum lengkap di Vercel.");else if(service&&s)notify("Koneksi "+service+" belum berhasil. Coba lagi.");if(service)history.replaceState(null,"",location.pathname)}
 const date=new Date();qs("#todayLabel").textContent=date.toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long"});
-loadIntegrations();pageNotice();
+loadIntegrations();pageNotice();configureLocalMarketplaceSearch();
 </script>
+<style>
+.research-table{min-width:1030px}
+.research-table .research-price{min-width:125px}
+.research-table .research-specs{min-width:160px;max-width:220px;line-height:1.5}
+.research-table .research-condition{min-width:100px;white-space:nowrap}
+.research-table .research-price.is-missing,.research-table .research-specs.is-missing,.research-table .research-condition.is-missing{color:var(--muted);font-weight:500}
+.research-table .research-source{min-width:155px;max-width:190px}
+.research-table .research-source small{display:block;margin-top:4px;color:var(--muted);font-size:10px}
+.shopee-product strong{display:block;overflow-wrap:anywhere}
+.shopee-price{display:block;margin-top:4px;color:var(--mint);font-size:14px}
+.shopee-product small{display:block;margin:4px 0;color:var(--muted)}
+.shopee-product a{display:inline-block;margin-top:5px;color:var(--mint);text-decoration:underline;text-underline-offset:2px}
+.tokopedia-product strong{display:block;overflow-wrap:anywhere}
+.tokopedia-price{display:block;margin-top:4px;color:var(--mint);font-size:14px}
+.tokopedia-product small{display:block;margin:4px 0;color:var(--muted)}
+.tokopedia-product a{display:inline-block;margin-top:5px;color:var(--mint);text-decoration:underline;text-underline-offset:2px}
+#shopeeResearchButton[hidden]{display:none!important}
+#tokopediaResearchButton[hidden]{display:none!important}
+</style>
+  <script defer src="/assets/blueprint.js"></script>
 </body></html>

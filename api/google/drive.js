@@ -1,11 +1,136 @@
+const crypto = require("crypto");
 const { googleAccessToken, error } = require("../_lib/integrations");
 
 const DRIVE = "https://www.googleapis.com/drive/v3/files";
+const DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3/files";
+const PIOSALES_FOLDER = "piosalesinv";
+const MAX_INVOICE_PDF_BYTES = 2 * 1024 * 1024;
 const MAX_CHAT_FILE_BYTES = 2 * 1024 * 1024;
 const MAX_DOWNLOAD_BYTES = 4 * 1024 * 1024;
 
 function safeFileName(value) {
   return String(value || "").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").trim().slice(0, 180);
+}
+
+function escapeDriveValue(value) {
+  return String(value || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+async function driveJson(response, fallback) {
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw Object.assign(new Error(data.error && data.error.message || fallback), { status: response.status });
+  }
+  return data;
+}
+
+async function findInvoiceFolder(access) {
+  const url = new URL(DRIVE);
+  url.search = new URLSearchParams({
+    q: `trashed = false and mimeType = 'application/vnd.google-apps.folder' and name = '${escapeDriveValue(PIOSALES_FOLDER)}'`,
+    pageSize: "50",
+    spaces: "drive",
+    supportsAllDrives: "true",
+    fields: "files(id,name,appProperties,capabilities(canAddChildren))"
+  }).toString();
+  const response = await fetch(url, { headers: { Authorization: `Bearer ${access}` } });
+  const data = await driveJson(response, "Tidak dapat mencari folder invoice di Google Drive.");
+  const folders = data.files || [];
+  return folders.find((folder) => folder.appProperties && folder.appProperties.piobotPurpose === "piosales-invoices") || folders[0] || null;
+}
+
+async function createInvoiceFolder(access) {
+  const response = await fetch(`${DRIVE}?supportsAllDrives=true&fields=id,name,appProperties`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${access}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: PIOSALES_FOLDER,
+      mimeType: "application/vnd.google-apps.folder",
+      appProperties: { piobotPurpose: "piosales-invoices" }
+    })
+  });
+  return driveJson(response, "Tidak dapat membuat folder piosalesinv di Google Drive.");
+}
+
+async function findInvoiceFile(access, folderId, invoiceKey) {
+  const url = new URL(DRIVE);
+  url.search = new URLSearchParams({
+    q: `'${folderId}' in parents and trashed = false and appProperties has { key = 'piobotPurpose' and value = 'piosales-invoice' } and appProperties has { key = 'piobotInvoiceKey' and value = '${invoiceKey}' }`,
+    pageSize: "10",
+    spaces: "drive",
+    supportsAllDrives: "true",
+    fields: "files(id,name,webViewLink)"
+  }).toString();
+  const response = await fetch(url, { headers: { Authorization: `Bearer ${access}` } });
+  const data = await driveJson(response, "Tidak dapat mencari salinan invoice di Google Drive.");
+  return (data.files || [])[0] || null;
+}
+
+async function uploadInvoicePdf(access, folderId, fileName, invoiceKey, bytes, existingFile) {
+  if (existingFile) {
+    const url = new URL(`${DRIVE_UPLOAD}/${encodeURIComponent(existingFile.id)}`);
+    url.search = new URLSearchParams({ uploadType: "media", supportsAllDrives: "true", fields: "id,name,webViewLink" }).toString();
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${access}`, "Content-Type": "application/pdf" },
+      body: bytes
+    });
+    return { file: await driveJson(response, "Tidak dapat memperbarui PDF invoice di Google Drive."), updated: true };
+  }
+
+  const boundary = `piobot_${crypto.randomBytes(12).toString("hex")}`;
+  const metadata = {
+    name: fileName,
+    mimeType: "application/pdf",
+    parents: [folderId],
+    appProperties: { piobotPurpose: "piosales-invoice", piobotInvoiceKey: invoiceKey }
+  };
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/pdf\r\n\r\n`),
+    bytes,
+    Buffer.from(`\r\n--${boundary}--\r\n`)
+  ]);
+  const url = new URL(DRIVE_UPLOAD);
+  url.search = new URLSearchParams({ uploadType: "multipart", supportsAllDrives: "true", fields: "id,name,webViewLink" }).toString();
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${access}`, "Content-Type": `multipart/related; boundary=${boundary}` },
+    body
+  });
+  return { file: await driveJson(response, "Tidak dapat mengunggah PDF invoice ke Google Drive."), updated: false };
+}
+
+async function saveInvoiceToDrive(access, body) {
+  let encoded = String(body.pdfBase64 || "").replace(/^data:application\/pdf;base64,/, "").replace(/\s/g, "");
+  if (!encoded || encoded.length > Math.ceil(MAX_INVOICE_PDF_BYTES * 4 / 3) + 8 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) {
+    throw Object.assign(new Error("PDF invoice kosong, tidak valid, atau melebihi batas 2 MB."), { status: 400 });
+  }
+  const bytes = Buffer.from(encoded, "base64");
+  if (bytes.length < 5 || bytes.length > MAX_INVOICE_PDF_BYTES || bytes.subarray(0, 5).toString("ascii") !== "%PDF-") {
+    throw Object.assign(new Error("File yang dikirim bukan PDF invoice yang valid atau melebihi batas 2 MB."), { status: 400 });
+  }
+
+  const invoiceNo = String(body.invoiceNo || "Invoice").slice(0, 180);
+  const invoiceKey = crypto.createHash("sha256").update(invoiceNo).digest("hex").slice(0, 32);
+  let fileName = safeFileName(body.fileName || `INV-${invoiceNo.replace(/\//g, "-")}.pdf`);
+  if (!fileName.toLowerCase().endsWith(".pdf")) fileName += ".pdf";
+  let folder = await findInvoiceFolder(access);
+  if (!folder) folder = await createInvoiceFolder(access);
+
+  let existing = await findInvoiceFile(access, folder.id, invoiceKey);
+  try {
+    const saved = await uploadInvoicePdf(access, folder.id, fileName, invoiceKey, bytes, existing);
+    return { ...saved, folderName: PIOSALES_FOLDER };
+  } catch (err) {
+    const appOwned = folder.appProperties && folder.appProperties.piobotPurpose === "piosales-invoices";
+    if (!appOwned && [403, 404].includes(err.status)) {
+      folder = await createInvoiceFolder(access);
+      existing = null;
+      const saved = await uploadInvoicePdf(access, folder.id, fileName, invoiceKey, bytes, existing);
+      return { ...saved, folderName: PIOSALES_FOLDER };
+    }
+    throw err;
+  }
 }
 
 async function readLimited(response) {
@@ -132,12 +257,19 @@ module.exports = async function handler(req, res) {
     }
 
     const body = req.body || {};
+    if (body.action === "save-piosales-invoice") {
+      const saved = await saveInvoiceToDrive(access, body);
+      return res.status(200).json({ ok: true, ...saved });
+    }
     if (body.action === "read-for-chat") {
       const attachment = await readFileForChat(access, String(body.fileId || ""));
       return res.status(200).json({ attachment });
     }
     return error(res, 400, "Aksi Drive tidak dikenal.");
   } catch (e) {
+    if (e.status === 403 && req.method === "POST" && req.body && req.body.action === "save-piosales-invoice") {
+      return error(res, 403, "Izin Google Drive untuk membuat file belum aktif. Putuskan lalu hubungkan ulang Google dan setujui izin Drive untuk menyimpan invoice.");
+    }
     return error(res, e.status || 401, e.message || "Hubungkan akun Google terlebih dahulu.");
   }
 };

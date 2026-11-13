@@ -3,6 +3,23 @@
   "functions": {
     "api/chat.js": {
       "maxDuration": 60
+    },
+    "api/integrations.js": {
+      "maxDuration": 60
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/blueprint",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/blueprint/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/api/auth/callback/google",
+      "destination": "/api/google/callback"
+    }
+  ]
 }

@@ -1,0 +1,205 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Caveat:wght@600&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #f0fdfa;
+  --color-brand-100: #ccfbf1;
+  --color-brand-200: #99f6e4;
+  --color-brand-300: #5eead4;
+  --color-brand-400: #2dd4bf;
+  --color-brand-500: #14b8a6;
+  --color-brand-600: #0d9488;
+  --color-brand-700: #0f766e;
+
+  --color-accent-50: #eff6ff;
+  --color-accent-100: #dbeafe;
+  --color-accent-500: #2563eb;
+  --color-accent-600: #1d4ed8;
+  --color-accent-700: #1e40af;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f4f6f9;
+  color: #0f172a;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+@media (max-width: 760px) {
+  .piosales-history-actions {
+    gap: 8px;
+  }
+
+  .piosales-history-actions .piosales-history-action {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    padding: 0;
+  }
+
+  .piosales-history-actions .piosales-history-action-icon {
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    min-height: 20px;
+  }
+
+  .piosales-history-actions .piosales-history-label {
+    display: none;
+  }
+
+  .piosales-embedded .piosales-brand,
+  .piosales-embedded .piosales-header-actions {
+    display: none;
+  }
+
+  .piosales-embedded .piosales-toolbar {
+    height: auto;
+    min-height: 54px;
+    gap: 6px;
+    padding: 6px 12px;
+  }
+
+  .piosales-embedded .piosales-tabs {
+    min-width: 0;
+    gap: 2px;
+    padding: 3px;
+  }
+
+  .piosales-embedded .piosales-tabs button {
+    height: 40px;
+    gap: 5px;
+    padding: 0 6px;
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+
+  .piosales-embedded .piosales-tab-label {
+    display: inline;
+  }
+
+  .piosales-embedded .piosales-tabs svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.25;
+  }
+
+  .piosales-embedded .piosales-main {
+    padding: 10px 12px 16px;
+  }
+
+  .piosales-embedded .piosales-mobile-actions {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Smooth, predictable scrolling everywhere; no OS-flavored bounce/scrollbar surprises. */
+html {
+  scroll-behavior: smooth;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html[data-theme="dark"] body {
+  background: #0b111b;
+  color: #e2e8f0;
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] .piosales-app {
+  background-color: #0b111b;
+}
+
+html[data-theme="dark"] .piosales-app .bg-slate-50:not(.invoice-paper):not(.invoice-paper *),
+html[data-theme="dark"] .piosales-app .bg-slate-100:not(.invoice-paper):not(.invoice-paper *),
+html[data-theme="dark"] .piosales-app .bg-slate-200:not(.invoice-paper):not(.invoice-paper *),
+html[data-theme="dark"] .piosales-app .bg-white:not(.invoice-paper):not(.invoice-paper *),
+html[data-theme="dark"] .piosales-app [class~="bg-white/90"]:not(.invoice-paper):not(.invoice-paper *),
+html[data-theme="dark"] .piosales-app [class~="bg-white/95"]:not(.invoice-paper):not(.invoice-paper *) {
+  background-color: #121c28 !important;
+}
+
+html[data-theme="dark"] .piosales-app .bg-slate-50:not(.invoice-paper):not(.invoice-paper *) { background-color: #0b111b !important; }
+html[data-theme="dark"] .piosales-app .bg-slate-100:not(.invoice-paper):not(.invoice-paper *) { background-color: #172331 !important; }
+html[data-theme="dark"] .piosales-app .bg-slate-200:not(.invoice-paper):not(.invoice-paper *) { background-color: #263649 !important; }
+html[data-theme="dark"] .piosales-app .bg-amber-50:not(.invoice-paper):not(.invoice-paper *) { background-color: #332719 !important; }
+html[data-theme="dark"] .piosales-app .bg-blue-50:not(.invoice-paper):not(.invoice-paper *) { background-color: #172d42 !important; }
+html[data-theme="dark"] .piosales-app .bg-emerald-50:not(.invoice-paper):not(.invoice-paper *) { background-color: #122f28 !important; }
+html[data-theme="dark"] .piosales-app .bg-red-50:not(.invoice-paper):not(.invoice-paper *) { background-color: #381d22 !important; }
+html[data-theme="dark"] .piosales-app .bg-red-100:not(.invoice-paper):not(.invoice-paper *) { background-color: #49242b !important; }
+
+html[data-theme="dark"] .piosales-app .text-slate-900:not(.invoice-paper):not(.invoice-paper *) { color: #f1f5f9 !important; }
+html[data-theme="dark"] .piosales-app .text-slate-800:not(.invoice-paper):not(.invoice-paper *) { color: #e2e8f0 !important; }
+html[data-theme="dark"] .piosales-app .text-slate-700:not(.invoice-paper):not(.invoice-paper *) { color: #cbd5e1 !important; }
+html[data-theme="dark"] .piosales-app .text-slate-600:not(.invoice-paper):not(.invoice-paper *) { color: #a8b6c8 !important; }
+html[data-theme="dark"] .piosales-app .text-slate-500:not(.invoice-paper):not(.invoice-paper *) { color: #9aaabd !important; }
+html[data-theme="dark"] .piosales-app .text-slate-400:not(.invoice-paper):not(.invoice-paper *) { color: #8293a8 !important; }
+html[data-theme="dark"] .piosales-app .text-slate-300:not(.invoice-paper):not(.invoice-paper *) { color: #64748b !important; }
+
+html[data-theme="dark"] .piosales-app .border-slate-100:not(.invoice-paper):not(.invoice-paper *),
+html[data-theme="dark"] .piosales-app .border-slate-200:not(.invoice-paper):not(.invoice-paper *),
+html[data-theme="dark"] .piosales-app .border-slate-300:not(.invoice-paper):not(.invoice-paper *),
+html[data-theme="dark"] .piosales-app .border-slate-400:not(.invoice-paper):not(.invoice-paper *),
+html[data-theme="dark"] .piosales-app [class~="border-slate-200/80"]:not(.invoice-paper):not(.invoice-paper *) {
+  border-color: #2a394b !important;
+}
+
+html[data-theme="dark"] .piosales-app [class~="hover:bg-slate-50"]:hover:not(.invoice-paper):not(.invoice-paper *),
+html[data-theme="dark"] .piosales-app [class~="hover:bg-slate-100"]:hover:not(.invoice-paper):not(.invoice-paper *) {
+  background-color: #1b2938 !important;
+}
+
+html[data-theme="dark"] .piosales-app input,
+html[data-theme="dark"] .piosales-app textarea,
+html[data-theme="dark"] .piosales-app select {
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] .piosales-app ::placeholder { color: #718198; }
+html[data-theme="dark"] .piosales-app .invoice-paper { color-scheme: light; }
+html[data-theme="dark"] .piosales-app ::-webkit-scrollbar-thumb { background: #334155; }
+html[data-theme="dark"] .piosales-app ::-webkit-scrollbar-thumb:hover { background: #475569; }

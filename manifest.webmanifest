@@ -1,0 +1,31 @@
+{
+  "id": "/",
+  "name": "PioBot Workspace — ITPIO",
+  "short_name": "PioBot",
+  "description": "Workspace digital ITPIO untuk chat, jadwal, materi, ClickUp, dan riset harga.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1014",
+  "theme_color": "#0c1115",
+  "icons": [
+    {
+      "src": "/icons/piobot-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/piobot-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/piobot-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
