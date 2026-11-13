@@ -1,5 +1,5 @@
 const API_URL = "https://api.kie.ai/claude/v1/messages";
-const MODEL = "claude-opus-5-5";
+const MODEL = "claude-opus-5";
 const runResearch = require("./_lib/research");
 const MAX_MESSAGES = 16;
 const MAX_MESSAGE_CHARS = 3000;
@@ -155,7 +155,7 @@ module.exports = async function handler(req, res) {
       const status = upstream.status;
       console.error("KIE API request failed with status", status);
       if (status === 401 || status === 403) {
-        return res.status(502).json({ error: "KIE menolak API key atau akses Claude Opus 5.5. Periksa akses model dan secret KIE_API_KEY di Vercel." });
+        return res.status(502).json({ error: "KIE menolak API key atau akses Claude Opus 5. Periksa akses model dan secret KIE_API_KEY di Vercel." });
       }
       if (status === 429) {
         return res.status(503).json({ error: "Kuota atau batas permintaan KIE sedang tercapai. Coba lagi nanti." });
@@ -170,7 +170,7 @@ module.exports = async function handler(req, res) {
     if (data && data.code !== undefined && providerCode !== 200 && providerCode !== 0) {
       console.error("KIE returned provider code", providerCode);
       if (providerCode === 401 || providerCode === 403) {
-        return res.status(502).json({ error: "API key KIE tersimpan, tetapi belum diizinkan memakai Claude Opus 5.5. Aktifkan akses model ini di KIE atau pilih model yang tersedia untuk akunmu." });
+        return res.status(502).json({ error: "API key KIE tersimpan, tetapi belum diizinkan memakai Claude Opus 5. Aktifkan akses model ini di KIE atau pilih model yang tersedia untuk akunmu." });
       }
       if (providerCode === 429) {
         return res.status(503).json({ error: "Kuota atau batas permintaan KIE sedang tercapai. Coba lagi nanti." });
@@ -199,7 +199,7 @@ module.exports = async function handler(req, res) {
           outputTokens: payloadData.usage.output_tokens
         } : undefined
       });
-      return res.status(502).json({ error: "KIE mengirim respons tanpa teks. Periksa format dan akses model Claude Opus 5.5 di akun KIE." });
+      return res.status(502).json({ error: "KIE mengirim respons tanpa teks. Periksa format dan akses model Claude Opus 5 di akun KIE." });
     }
 
     const sources = (Array.isArray(message && message.annotations) ? message.annotations : [])
