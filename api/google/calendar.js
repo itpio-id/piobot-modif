@@ -38,9 +38,11 @@ module.exports = async function handler(req, res) {
     const start = new Date(body.start);
     const end = new Date(body.end);
     const timeZone = String(body.timeZone || "Asia/Jakarta").slice(0, 80);
-    if (!title || !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) {
-      return error(res, 400, "Isi judul, waktu mulai, dan waktu selesai yang valid.");
+    if (!title) return error(res, 400, "Isi nama acara.");
+    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
+      return error(res, 400, "Pilih tanggal dan waktu mulai serta selesai yang valid.");
     }
+    if (end <= start) return error(res, 400, "Waktu selesai harus setelah waktu mulai.");
     const overlapResponse = await requestEvents(access, start.toISOString(), end.toISOString());
     if (overlapResponse.ok) {
       const overlapData = await overlapResponse.json().catch(() => ({}));
