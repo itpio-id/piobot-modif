@@ -201,5 +201,35 @@ html[data-theme="dark"] .piosales-app select {
 
 html[data-theme="dark"] .piosales-app ::placeholder { color: #718198; }
 html[data-theme="dark"] .piosales-app .invoice-paper { color-scheme: light; }
+.piosales-app button:not(.invoice-paper):not(.invoice-paper *) {
+  color: #fff !important;
+  text-shadow: 0 0 8px rgba(50, 238, 193, .62), 0 0 17px rgba(50, 238, 193, .3) !important;
+}
+.piosales-app button:not(.invoice-paper):not(.invoice-paper *) * {
+  color: #fff !important;
+  text-shadow: inherit !important;
+}
+.piosales-app button:not(.invoice-paper):not(.invoice-paper *) svg {
+  color: #fff !important;
+  filter: drop-shadow(0 0 5px rgba(50, 238, 193, .58)) !important;
+}
+.piosales-app button:not(.invoice-paper):not(.invoice-paper *) svg :is(path, line, circle, rect, polyline, polygon) {
+  stroke: currentColor !important;
+}
+.piosales-app button:not(.invoice-paper):not(.invoice-paper *) svg [fill]:not([fill="none"]) {
+  fill: currentColor !important;
+}
+html[data-theme="light"] .piosales-app button:not(.invoice-paper):not(.invoice-paper *):not([class*="text-red-"]):not([class*="bg-red-"]) {
+  background-color: #173f3b !important;
+  border-color: #2a6a60 !important;
+}
+html[data-theme="light"] .piosales-app button[aria-pressed="true"]:not(.invoice-paper):not(.invoice-paper *):not([class*="text-red-"]):not([class*="bg-red-"]) {
+  background-color: #0d7568 !important;
+}
+html[data-theme="light"] .piosales-app button:is([class*="text-red-"], [class*="bg-red-"]):not(.invoice-paper):not(.invoice-paper *) {
+  background-color: #80332e !important;
+  border-color: #b34d46 !important;
+}
+.piosales-app button .bg-slate-200 { background-color: #35524e !important; }
 html[data-theme="dark"] .piosales-app ::-webkit-scrollbar-thumb { background: #334155; }
 html[data-theme="dark"] .piosales-app ::-webkit-scrollbar-thumb:hover { background: #475569; }
