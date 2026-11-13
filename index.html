@@ -135,6 +135,56 @@ body.piosales-view.piosales-compact .topbar-module{display:block;max-width:130px
 @media(max-width:999px){.topbar-tools{display:none}}
 </style>
 <link rel="stylesheet" href="/assets/blueprint.css">
+<style>
+.chat-attachment-chip{display:inline-flex;align-items:center;gap:8px;max-width:100%;width:max-content;margin:0 0 10px;padding:7px 11px;border:1px solid var(--active-border);border-radius:10px;background:var(--accent-soft);color:var(--ink);font-size:12px;overflow-wrap:anywhere}
+.chat-attachment-chip[hidden]{display:none}
+.chat-composer-shell{position:relative;display:flex;align-items:flex-end;gap:9px;padding:8px;border:1px solid var(--soft-border);border-radius:18px;background:var(--input-bg);transition:border-color .16s ease,box-shadow .16s ease}
+.chat-composer-shell:focus-within{border-color:var(--mint);box-shadow:0 0 0 3px color-mix(in srgb,var(--mint) 14%,transparent)}
+.chat-plus-wrap{position:relative;flex:0 0 auto}
+.composer .chat-plus-button{display:grid;place-items:center;width:42px;height:42px;min-width:42px;padding:0;border:1px solid var(--soft-border);border-radius:50%;background:var(--surface2);color:var(--ink);transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.chat-plus-button:hover{transform:rotate(45deg);border-color:var(--active-border);background:var(--accent-soft);filter:none}
+.chat-plus-button[aria-expanded="true"]{transform:rotate(45deg);border-color:var(--active-border);background:var(--accent-soft)}
+.chat-plus-button svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+#chatFile{display:none}
+.composer form#chatForm{display:flex;flex:1;align-items:center;gap:8px;min-width:0;background:transparent}
+.composer #chatInput{flex:1;width:100%;min-width:0;height:42px;padding:9px 4px;border:0;border-radius:9px;background:transparent;box-shadow:none;color:var(--ink);outline:none}
+.composer #chatInput:focus{border:0;box-shadow:none}
+.composer #chatInput::placeholder{color:var(--muted)}
+.composer #sendButton{flex:0 0 auto;min-width:44px;height:42px;padding:0 15px;border-radius:12px;background:linear-gradient(135deg,var(--mint),var(--blue));color:#071411}
+.chat-action-popover{position:absolute;z-index:24;left:0;bottom:calc(100% + 11px);width:310px;max-width:calc(100vw - 32px);padding:7px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:0 18px 48px #07131830;animation:chatPopoverIn .16s ease-out}
+.chat-action-popover[hidden],.chat-drive-picker[hidden]{display:none}
+@keyframes chatPopoverIn{from{opacity:0;transform:translateY(5px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+.chat-action-list{display:grid;gap:3px}
+.composer .chat-action-item{display:flex;align-items:center;gap:11px;width:100%;padding:10px;border:0;border-radius:11px;background:transparent;color:var(--ink);text-align:left;transition:background .15s ease,transform .15s ease}
+.composer .chat-action-item:hover{transform:none;background:var(--hover);filter:none}
+.chat-action-copy{display:grid;gap:3px;flex:1;min-width:0}
+.chat-action-copy strong{font-size:13px;font-weight:650}
+.chat-action-copy small{font-size:11px;font-weight:400;color:var(--muted);line-height:1.35}
+.chat-action-icon{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--mint)}
+.chat-action-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.chat-action-icon.clickup-mark{font-weight:800;font-size:16px;color:#7665ec}
+.chat-action-state{flex:0 0 auto;color:var(--mint);font-size:10px;font-weight:650}
+.chat-action-divider{height:1px;margin:3px 6px;background:var(--line)}
+.chat-drive-picker{padding:4px}
+.chat-picker-head{display:flex;align-items:center;gap:9px;padding:3px 2px 11px}
+.chat-picker-head strong{display:block;color:var(--ink);font-size:13px}
+.chat-picker-head small{display:block;margin-top:2px;color:var(--muted);font-size:11px}
+.composer .chat-picker-back{display:grid;place-items:center;width:34px;height:34px;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--ink);font-size:18px}
+.chat-drive-search{display:flex;gap:6px;padding:0 0 8px}
+.chat-drive-search input{flex:1;min-width:0;height:36px;padding:8px 10px;border:1px solid var(--soft-border);border-radius:9px;background:var(--input-bg);color:var(--ink);outline:none}
+.chat-drive-search input:focus{border-color:var(--mint);box-shadow:0 0 0 2px color-mix(in srgb,var(--mint) 15%,transparent)}
+.composer .chat-drive-search button{height:36px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);color:var(--ink);font-size:11px}
+.chat-drive-files{display:grid;gap:3px;max-height:220px;overflow:auto}
+.composer .chat-drive-file{display:flex;align-items:center;gap:9px;width:100%;padding:8px;border:0;border-radius:9px;background:transparent;color:var(--ink);text-align:left}
+.composer .chat-drive-file:hover{transform:none;background:var(--hover);filter:none}
+.chat-drive-file-icon{display:grid;place-items:center;width:30px;height:30px;flex:0 0 30px;border-radius:8px;background:var(--accent-soft);color:var(--mint);font-size:13px}
+.chat-drive-file-copy{display:grid;gap:3px;min-width:0;flex:1}
+.chat-drive-file-copy strong{overflow:hidden;color:var(--ink);font-size:11px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+.chat-drive-file-copy small{overflow:hidden;color:var(--muted);font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+.chat-drive-empty{padding:14px 8px;color:var(--muted);font-size:11px;text-align:center}
+#chatAttachmentStatus:empty{display:none}
+@media(max-width:600px){.composer{padding:10px}.chat-composer-shell{gap:7px;padding:7px}.composer .chat-plus-button{width:40px;height:40px;min-width:40px}.composer #sendButton{height:40px;padding:0 12px}.composer #chatInput{height:40px;padding-left:2px;font-size:14px}.chat-action-popover{width:min(310px,calc(100vw - 28px));left:-1px}.composer>p{font-size:10px;line-height:1.5}}
+</style>
 </head>
 <body>
 <a class="skip-link" href="#mainContent">Lewati ke konten</a>
@@ -178,7 +228,32 @@ body.piosales-view.piosales-compact .topbar-module{display:block;max-width:130px
           <div class="chat-head"><div class="chat-avatar"><img src="/assets/agentpio-avatar.jpeg" alt="Avatar AgentPio"></div><div><strong>PioBot</strong><br><small>Asisten digital ITPIO</small></div><small id="apiStatus">Menghubungkan…</small></div>
           <div class="messages" id="messages" aria-live="polite"></div>
           <div class="suggestions" id="suggestions"></div>
-          <div class="composer"><div class="attachment-tools"><label class="btn ghost smallbtn" for="chatFile">＋ Lampirkan file</label><input id="chatFile" type="file" accept=".txt,.md,.csv,.json,.html,.xml,.pdf,.png,.jpg,.jpeg,.webp,.gif,text/plain,text/markdown,text/csv,application/json,application/pdf,image/png,image/jpeg,image/webp,image/gif"><button type="button" class="btn ghost smallbtn" id="browseDriveForChat">Pilih dari Drive</button><span class="attachment-name" id="chatAttachmentName"></span><button type="button" class="btn ghost smallbtn" id="clearChatAttachment" hidden>Hapus</button></div><div class="statusline" id="chatAttachmentStatus"></div><form id="chatForm" autocomplete="off"><input id="chatInput" maxlength="3000" placeholder="Tulis pesan atau pekerjaan yang ingin dibantu…" aria-label="Pesan untuk PioBot"><button id="sendButton">Kirim ↗</button></form><p class="small muted" style="margin:8px 2px 0">Bisa lampirkan TXT, PDF, atau gambar (maksimal 2 MB). File akan dikirim ke AI untuk dianalisis. Jangan kirim data rahasia.</p></div>
+          <div class="composer">
+            <div class="chat-attachment-chip" id="chatAttachmentName" hidden></div>
+            <div class="statusline" id="chatAttachmentStatus" aria-live="polite"></div>
+            <div class="chat-composer-shell">
+              <div class="chat-plus-wrap">
+                <button type="button" class="chat-plus-button" id="chatPlusButton" aria-label="Tambahkan ke chat" title="Tambahkan ke chat" aria-expanded="false" aria-controls="chatActionPopover"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+                <input id="chatFile" type="file" accept=".txt,.md,.csv,.json,.html,.xml,.pdf,.png,.jpg,.jpeg,.webp,.gif,text/plain,text/markdown,text/csv,application/json,application/pdf,image/png,image/jpeg,image/webp,image/gif">
+                <div class="chat-action-popover" id="chatActionPopover" hidden>
+                  <div class="chat-action-list" id="chatActionMenu" aria-label="Tambah ke percakapan">
+                    <button type="button" class="chat-action-item" id="chatFileAction"><span class="chat-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 12.5 14.2 6.3a3.2 3.2 0 0 1 4.5 4.5l-7.8 7.8a5 5 0 0 1-7.1-7.1l7.5-7.5"/></svg></span><span class="chat-action-copy"><strong>Lampirkan file</strong><small>Pilih dokumen, PDF, atau gambar</small></span></button>
+                    <button type="button" class="chat-action-item" id="chatDriveAction"><span class="chat-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m8.2 3 5.1.1 7.2 12.4-2.6 4.5h-5.2L5.5 7.5z"/><path d="m3 16 2.5-4.3h14.9"/></svg></span><span class="chat-action-copy"><strong id="chatDriveActionTitle">Google Drive</strong><small id="chatDriveActionMeta">Memeriksa koneksi…</small></span><span class="chat-action-state" id="chatDriveActionState"></span></button>
+                    <div class="chat-action-divider" aria-hidden="true"></div>
+                    <button type="button" class="chat-action-item" id="chatClickupAction"><span class="chat-action-icon clickup-mark" aria-hidden="true">⌑</span><span class="chat-action-copy"><strong id="chatClickupActionTitle">ClickUp</strong><small id="chatClickupActionMeta">Memeriksa koneksi…</small></span><span class="chat-action-state" id="chatClickupActionState"></span></button>
+                  </div>
+                  <section class="chat-drive-picker" id="chatDrivePicker" aria-label="Pilih file Google Drive" hidden>
+                    <div class="chat-picker-head"><button type="button" class="chat-picker-back" id="chatDriveBack" aria-label="Kembali ke menu tambah">‹</button><div><strong>Pilih dari Google Drive</strong><small>File terpilih akan dilampirkan ke chat</small></div></div>
+                    <div class="chat-drive-search"><input type="search" id="chatDriveSearchInput" maxlength="120" placeholder="Cari nama file…" aria-label="Cari file di Google Drive"><button type="button" id="chatDriveSearchButton">Cari</button></div>
+                    <div class="chat-drive-files" id="chatDriveFiles" aria-live="polite"></div>
+                    <div class="statusline" id="chatDrivePickerStatus" aria-live="polite"></div>
+                  </section>
+                </div>
+              </div>
+              <form id="chatForm" autocomplete="off"><input id="chatInput" maxlength="3000" placeholder="Tulis pesan atau pekerjaan yang ingin dibantu…" aria-label="Pesan untuk PioBot"><button id="sendButton" aria-label="Kirim pesan">Kirim ↗</button></form>
+            </div>
+            <p class="small muted chat-composer-hint">Bisa lampirkan TXT, PDF, gambar, atau file dari Google Drive (maksimal 2 MB untuk file lokal). Jangan kirim data rahasia.</p>
+          </div>
         </div>
       </section>
       <section class="screen" id="screen-calendar">
@@ -226,14 +301,61 @@ let busy=false, googleConnected=false, clickupConnected=false, googleConfigured=
 function notify(text){toast.textContent=text;toast.classList.add("show");setTimeout(function(){toast.classList.remove("show")},3400)}
 function safeDate(value){if(!value)return "Waktu belum tersedia";const d=new Date(value);return isNaN(d)?value:d.toLocaleString("id-ID",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}
 function addBubble(role,text){const el=document.createElement("div");el.className="bubble "+(role==="user"?"user":"bot");el.textContent=text;messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el}
-function setBusy(v){busy=v;sendButton.disabled=v;chatInput.disabled=v;qs("#chatFile").disabled=v;qs("#browseDriveForChat").disabled=v;sendButton.textContent=v?"Menjawab…":"Kirim ↗"}
+function setBusy(v){busy=v;sendButton.disabled=v;chatInput.disabled=v;qs("#chatFile").disabled=v;qs("#chatPlusButton").disabled=v;if(v)closeChatActionPopover();sendButton.textContent=v?"Menjawab…":"Kirim ↗"}
 async function api(url,options){const response=await fetch(url,options||{});const data=await response.json().catch(function(){return {}});if(!response.ok)throw new Error(data.error||"Permintaan gagal. Coba lagi.");return data}
-function setPendingChatAttachment(attachment){pendingChatAttachment=attachment;qs("#chatAttachmentName").textContent=attachment?"📎 "+attachment.name:"";qs("#clearChatAttachment").hidden=!attachment;status("chatAttachmentStatus",attachment?(attachment.truncated?"File siap. Isi teks akan dibatasi 30.000 karakter.":"File siap dikirim ke PioBot."):"",attachment?"ok":"")}
-qs("#clearChatAttachment").addEventListener("click",function(){setPendingChatAttachment(null);qs("#chatFile").value=""});
+function setPendingChatAttachment(attachment){pendingChatAttachment=attachment;const chip=qs("#chatAttachmentName");chip.textContent=attachment?"📎 "+attachment.name:"";chip.hidden=!attachment;status("chatAttachmentStatus",attachment?(attachment.truncated?"Isi teks lampiran dibatasi 30.000 karakter.":"File siap dikirim ke PioBot."):"",attachment?"ok":"")}
+
 qs("#chatFile").addEventListener("change",async function(){const file=this.files&&this.files[0];if(!file)return;if(file.size>2*1024*1024){setPendingChatAttachment(null);status("chatAttachmentStatus","Ukuran lampiran maksimal 2 MB.","error");this.value="";return}const ext=file.name.toLowerCase().match(/\.[^.]+$/);const types={".txt":"text/plain",".md":"text/markdown",".csv":"text/csv",".json":"application/json",".html":"text/html",".xml":"application/xml",".pdf":"application/pdf",".jpg":"image/jpeg",".jpeg":"image/jpeg",".png":"image/png",".gif":"image/gif",".webp":"image/webp"};const mimeType=types[ext&&ext[0]]||file.type||"application/octet-stream";try{status("chatAttachmentStatus","Membaca file…");if(mimeType.startsWith("text/")||["application/json","application/xml"].includes(mimeType)){const text=await file.text();setPendingChatAttachment({name:file.name,mimeType,text:text.slice(0,30000),truncated:text.length>30000})}else if(mimeType==="application/pdf"||["image/jpeg","image/png","image/gif","image/webp"].includes(mimeType)){setPendingChatAttachment({name:file.name,mimeType,base64:await fileAsBase64(file)})}else{throw new Error("Format tidak didukung. Pilih TXT, CSV, JSON, PDF, JPG, PNG, GIF, atau WebP.")}}catch(error){setPendingChatAttachment(null);status("chatAttachmentStatus",error.message,"error");this.value=""}});
 async function sendChat(text){if(busy||(!text.trim()&&!pendingChatAttachment))return;setBusy(true);const clean=text.trim()||(pendingChatAttachment?"Tolong analisis file yang saya lampirkan.":"");const attachment=pendingChatAttachment;historyMessages.push({role:"user",content:clean});addBubble("user",clean+(attachment?"\n📎 "+attachment.name:""));const typing=document.createElement("div");typing.className="bubble bot typing";typing.innerHTML="<i></i><i></i><i></i>";messages.appendChild(typing);messages.scrollTop=messages.scrollHeight;try{const payload={messages:historyMessages.slice(-16)};if(attachment)payload.attachment=attachment;const result=await api("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});typing.remove();setPendingChatAttachment(null);qs("#chatFile").value="";historyMessages.push({role:"assistant",content:result.reply});addBubble("assistant",result.reply);if(result.sources&&result.sources.length){const sources=result.sources.map(function(x){return x.title+": "+x.url}).join("\n");addBubble("assistant","Sumber:\n"+sources)}}catch(e){typing.remove();addBubble("assistant","PioBot: "+e.message)}finally{setBusy(false);chatInput.focus()}}
 qs("#chatForm").addEventListener("submit",function(e){e.preventDefault();const value=chatInput.value;chatInput.value="";sendChat(value)});
-qs("#browseDriveForChat").addEventListener("click",function(){qs('.nav button[data-view="clickup"]').click();qs("#driveSearchForm").scrollIntoView({behavior:"smooth",block:"center"});qs("#driveSearchQuery").focus({preventScroll:true})});
+function syncChatActionLabels(){
+  const driveTitle=qs("#chatDriveActionTitle"),driveMeta=qs("#chatDriveActionMeta"),driveState=qs("#chatDriveActionState");
+  const clickTitle=qs("#chatClickupActionTitle"),clickMeta=qs("#chatClickupActionMeta"),clickState=qs("#chatClickupActionState");
+  if(!driveTitle||!clickTitle)return;
+  driveTitle.textContent=googleConnected?"Pilih dari Google Drive":(googleConfigured?"Hubungkan Google Drive":"Google Drive belum disetel");
+  driveMeta.textContent=googleConnected?"Cari dan lampirkan file ke chat":"Gunakan file Drive dalam percakapan";
+  driveState.textContent=googleConnected?"Terhubung":"";
+  clickTitle.textContent=clickupConnected?"Buka ClickUp":(clickupConfigured?"Hubungkan ClickUp":"ClickUp belum disetel");
+  clickMeta.textContent=clickupConnected?"Workspace dan task tersedia":"Hubungkan workspace untuk mengelola task";
+  clickState.textContent=clickupConnected?"Terhubung":"";
+}
+function closeChatActionPopover(){const popover=qs("#chatActionPopover"),button=qs("#chatPlusButton");if(!popover||!button)return;popover.hidden=true;qs("#chatActionMenu").hidden=false;qs("#chatDrivePicker").hidden=true;button.setAttribute("aria-expanded","false")}
+function toggleChatActionPopover(){const popover=qs("#chatActionPopover"),button=qs("#chatPlusButton"),opening=popover.hidden;popover.hidden=!opening;button.setAttribute("aria-expanded",String(opening));if(!opening){qs("#chatActionMenu").hidden=false;qs("#chatDrivePicker").hidden=true}}
+async function searchChatDriveFiles(term){
+  const query=typeof term==="string"?term:qs("#chatDriveSearchInput").value.trim(),list=qs("#chatDriveFiles");
+  list.replaceChildren();status("chatDrivePickerStatus",query?"Mencari file…":"Memuat file terbaru…");
+  try{
+    const data=await api("/api/google/drive?q="+encodeURIComponent(query));
+    if(!data.files.length){const empty=document.createElement("div");empty.className="chat-drive-empty";empty.textContent=query?"Tidak ada file dengan nama itu.":"Belum ada file di Google Drive.";list.appendChild(empty)}
+    data.files.forEach(function(file){
+      const button=document.createElement("button");button.type="button";button.className="chat-drive-file";
+      const icon=document.createElement("span");icon.className="chat-drive-file-icon";icon.textContent="↳";
+      const copy=document.createElement("span");copy.className="chat-drive-file-copy";
+      const name=document.createElement("strong");name.textContent=file.name||"File tanpa nama";
+      const meta=document.createElement("small");meta.textContent=(file.mimeType||"File Drive")+(file.modifiedTime?" · "+safeDate(file.modifiedTime):"");
+      copy.append(name,meta);button.append(icon,copy);button.addEventListener("click",function(){loadDriveAttachment(file,"chatDrivePickerStatus")});list.appendChild(button)
+    });
+    if(data.files.length)status("chatDrivePickerStatus","Pilih file untuk melampirkannya.");
+  }catch(error){status("chatDrivePickerStatus",error.message,"error")}
+}
+function openChatDrivePicker(){
+  if(!googleConnected){closeChatActionPopover();connect("google");return}
+  qs("#chatActionMenu").hidden=true;qs("#chatDrivePicker").hidden=false;qs("#chatDriveSearchInput").value="";searchChatDriveFiles("");qs("#chatDriveSearchInput").focus({preventScroll:true})
+}
+qs("#chatPlusButton").addEventListener("click",toggleChatActionPopover);
+qs("#chatFileAction").addEventListener("click",function(){closeChatActionPopover();qs("#chatFile").click()});
+qs("#chatDriveAction").addEventListener("click",openChatDrivePicker);
+qs("#chatDriveBack").addEventListener("click",function(){qs("#chatDrivePicker").hidden=true;qs("#chatActionMenu").hidden=false});
+qs("#chatDriveSearchButton").addEventListener("click",function(){searchChatDriveFiles()});
+qs("#chatDriveSearchInput").addEventListener("keydown",function(event){if(event.key==="Enter"){event.preventDefault();searchChatDriveFiles()}});
+qs("#chatClickupAction").addEventListener("click",function(){
+  closeChatActionPopover();
+  if(!clickupConnected){connect("clickup");return}
+  qs('.nav button[data-view="clickup"]').click();
+  qs("#taskForm").scrollIntoView({behavior:"smooth",block:"start"})
+});
+document.addEventListener("click",function(event){if(!event.target.closest(".chat-plus-wrap"))closeChatActionPopover()});
+document.addEventListener("keydown",function(event){if(event.key==="Escape")closeChatActionPopover()});
 [
   ["Bantu rapikan jadwal kelas AI minggu ini.", "🗓️ Rencana jadwal"],
   ["Buat kerangka materi kelas AI generatif untuk pemula.", "✦ Materi kelas"],
@@ -245,7 +367,7 @@ document.querySelectorAll(".nav button").forEach(function(button){button.addEven
 window.addEventListener("popstate",function(){const view=location.pathname.replace(/\/+$/,"")==="/blueprint"?"blueprint":"chat";qs('.nav button[data-view="'+view+'"]').click()});
 if(location.pathname.replace(/\/+$/,"")==="/blueprint")qs('.nav button[data-view="blueprint"]').click();
 qs('[data-view="piosales"]').addEventListener("click",syncPioSalesTheme);
-function setState(service,connected,label,configured,disconnectable){const status=qs("#"+service+"State"),identity=qs("#"+service+"Identity");status.textContent=connected?"Terhubung":(configured?"Belum terhubung":"Setup belum lengkap");status.classList.toggle("connected",connected);if(identity){identity.textContent=connected&&label?label:"";identity.hidden=!identity.textContent}qs("#"+service+"Connect").hidden=connected;qs("#"+service+"Disconnect").hidden=!connected||disconnectable===false}
+function setState(service,connected,label,configured,disconnectable){const status=qs("#"+service+"State"),identity=qs("#"+service+"Identity");status.textContent=connected?"Terhubung":(configured?"Belum terhubung":"Setup belum lengkap");status.classList.toggle("connected",connected);if(identity){identity.textContent=connected&&label?label:"";identity.hidden=!identity.textContent}qs("#"+service+"Connect").hidden=connected;qs("#"+service+"Disconnect").hidden=!connected||disconnectable===false;syncChatActionLabels()}
 async function loadIntegrations(){try{const data=await api("/api/integrations");googleConnected=data.google.connected;clickupConnected=data.clickup.connected;googleConfigured=data.google.configured;clickupConfigured=data.clickup.configured;setState("google",googleConnected,data.google.email,googleConfigured);setState("clickup",clickupConnected,data.clickup.user,clickupConfigured,data.clickup.disconnectable);api("/api/chat").then(function(x){apiStatus.textContent=x.configured?"🟢 AgentPio Ready":"⚠️ KIE belum disetel"}).catch(function(){apiStatus.textContent="AI belum tersedia"});if(googleConnected){loadCalendar();loadDrive()}if(clickupConnected)loadLists()}catch(e){setState("google",false,null,false);setState("clickup",false,null,false);apiStatus.textContent="API belum siap"}}
 function connect(service){const ready=service==="google"?googleConfigured:clickupConfigured;if(!ready){notify(service==="google"?"Setup Vercel: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, INTEGRATION_SECRET.":"Setup Vercel: CLICKUP_CLIENT_ID, CLICKUP_CLIENT_SECRET, INTEGRATION_SECRET.");return}location.href="/api/"+service+"/auth"}
 qs("#googleConnect").addEventListener("click",function(){connect("google")});qs("#clickupConnect").addEventListener("click",function(){connect("clickup")});
@@ -258,7 +380,7 @@ qs("#calendarForm").addEventListener("submit",async function(e){e.preventDefault
 async function loadDrive(term){if(!googleConnected){status("driveListStatus","Hubungkan Google dari panel kiri untuk mencari file Drive.");return}const query=typeof term==="string"?term:qs("#driveSearchQuery").value.trim();try{status("driveListStatus",query?"Mencari file…":"Memuat 3 file terbaru…");const data=await api("/api/google/drive?q="+encodeURIComponent(query));const list=qs("#driveList");list.replaceChildren();if(!data.files.length){const empty=document.createElement("div");empty.className="list-item";empty.textContent=query?"Tidak ada file dengan nama yang cocok.":"Belum ada file di Google Drive.";list.appendChild(empty)}data.files.forEach(function(file){const item=document.createElement("div");item.className="list-item";const strong=document.createElement("strong");strong.textContent=file.name;const meta=document.createElement("small");meta.textContent=(file.mimeType||"Drive file")+(file.modifiedTime?" · "+safeDate(file.modifiedTime):"");item.append(strong,meta);const actions=document.createElement("div");actions.className="file-actions";const download=document.createElement("button");download.type="button";download.className="btn ghost smallbtn";download.textContent="Unduh";download.addEventListener("click",function(){downloadDriveFile(file)});actions.appendChild(download);const reference=document.createElement("button");reference.type="button";reference.className="btn ghost smallbtn";reference.textContent="Gunakan di task";reference.addEventListener("click",function(){useDriveReference(file)});actions.appendChild(reference);const attach=document.createElement("button");attach.type="button";attach.className="btn ghost smallbtn";attach.textContent="Lampirkan ke chat";attach.addEventListener("click",function(){loadDriveAttachment(file)});actions.appendChild(attach);if(file.webViewLink){const open=document.createElement("a");open.href=file.webViewLink;open.target="_blank";open.rel="noopener noreferrer";open.textContent="Buka di Drive ↗";actions.appendChild(open)}item.appendChild(actions);list.appendChild(item)});status("driveListStatus",query?"Hasil pencarian dimuat.":"Tiga file terbaru dimuat.","ok")}catch(e){status("driveListStatus",e.message,"error")}}
 async function downloadDriveFile(file){const limit=4*1024*1024;if(Number(file.size||0)>limit&&file.webContentLink){window.open(file.webContentLink,"_blank","noopener,noreferrer");status("driveListStatus","File besar dibuka melalui unduhan Google Drive.","ok");return}try{status("driveListStatus","Menyiapkan unduhan "+file.name+"…");const response=await fetch("/api/google/drive?download="+encodeURIComponent(file.id));if(!response.ok){const data=await response.json().catch(function(){return {}});throw new Error(data.error||"Unduhan gagal. Coba buka file di Google Drive.")}let name=file.name;const disposition=response.headers.get("content-disposition")||"",encodedName=disposition.match(/filename\*=UTF-8''([^;]+)/i);if(encodedName){try{name=decodeURIComponent(encodedName[1])}catch{}}const blob=await response.blob();const url=URL.createObjectURL(blob);const anchor=document.createElement("a");anchor.href=url;anchor.download=name;document.body.appendChild(anchor);anchor.click();anchor.remove();setTimeout(function(){URL.revokeObjectURL(url)},1000);status("driveListStatus","Unduhan dimulai.","ok")}catch(e){status("driveListStatus",e.message+(file.webViewLink?" Buka file di Drive untuk mengunduh ukuran penuh.":""),"error")}}
 function useDriveReference(file){const description=qs("#taskDescription"),name=String(file.name||"File Drive").replace(/[\r\n]+/g," "),url=file.webViewLink||file.webContentLink||("https://drive.google.com/open?id="+encodeURIComponent(file.id)),reference="Referensi Google Drive: "+name+"\n"+url;description.value=description.value.trim()?description.value.trim()+"\n\n"+reference:reference;status("clickupStatus","Referensi Drive ditambahkan ke detail task. Pilih list lalu buat task untuk menyimpannya di ClickUp.","ok");description.scrollIntoView({behavior:"smooth",block:"center"});description.focus({preventScroll:true});notify("Referensi Drive ditambahkan ke task.")}
-async function loadDriveAttachment(file){try{status("driveListStatus","Mengambil "+file.name+" untuk dianalisis…");const data=await api("/api/google/drive",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"read-for-chat",fileId:file.id})});setPendingChatAttachment(data.attachment);qs('.nav button[data-view="chat"]').click();notify("File siap dilampirkan ke chat PioBot.")}catch(e){status("driveListStatus",e.message,"error")}}
+async function loadDriveAttachment(file,statusTarget){const target=statusTarget||"driveListStatus";try{status(target,"Mengambil "+file.name+" untuk dianalisis…");const data=await api("/api/google/drive",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"read-for-chat",fileId:file.id})});setPendingChatAttachment(data.attachment);closeChatActionPopover();status("chatAttachmentStatus","File Drive siap dikirim ke PioBot.","ok");qs('.nav button[data-view="chat"]').click();notify("File siap dilampirkan ke chat PioBot.")}catch(e){status(target,e.message,"error")}}
 qs("#refreshDrive").addEventListener("click",function(){loadDrive()});
 qs("#driveSearchForm").addEventListener("submit",function(e){e.preventDefault();loadDrive()});
 function fileAsBase64(file){return new Promise(function(resolve,reject){const reader=new FileReader();reader.onload=function(){resolve(String(reader.result).split(",")[1]||"")};reader.onerror=function(){reject(new Error("File tidak dapat dibaca dari perangkat."))};reader.readAsDataURL(file)})}
