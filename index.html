@@ -150,7 +150,7 @@ body.piosales-view.piosales-compact .topbar-module{display:block;max-width:130px
 .composer #chatInput{flex:1;width:100%;min-width:0;height:42px;padding:9px 4px;border:0;border-radius:9px;background:transparent;box-shadow:none;color:var(--ink);outline:none}
 .composer #chatInput:focus{border:0;box-shadow:none}
 .composer #chatInput::placeholder{color:var(--muted)}
-.composer #sendButton{flex:0 0 auto;min-width:44px;height:42px;padding:0 15px;border-radius:12px;background:linear-gradient(135deg,var(--mint),var(--blue));color:#071411}
+.composer #sendButton{display:grid;place-items:center;flex:0 0 42px;width:42px;min-width:42px;height:42px;padding:0;border-radius:50%;background:linear-gradient(135deg,var(--mint),var(--blue));color:#fff;box-shadow:0 3px 12px rgba(27,202,176,.22)}.composer #sendButton svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 4px rgba(98,255,225,.85))}.composer #sendButton:disabled svg{opacity:.55}
 .chat-action-popover{position:absolute;z-index:24;left:0;bottom:calc(100% + 11px);width:310px;max-width:calc(100vw - 32px);padding:7px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:0 18px 48px #07131830;animation:chatPopoverIn .16s ease-out}
 .chat-action-popover[hidden],.chat-drive-picker[hidden]{display:none}
 @keyframes chatPopoverIn{from{opacity:0;transform:translateY(5px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -183,7 +183,7 @@ body.piosales-view.piosales-compact .topbar-module{display:block;max-width:130px
 .chat-drive-file-copy small{overflow:hidden;color:var(--muted);font-size:10px;text-overflow:ellipsis;white-space:nowrap}
 .chat-drive-empty{padding:14px 8px;color:var(--muted);font-size:11px;text-align:center}
 #chatAttachmentStatus:empty{display:none}
-@media(max-width:600px){.composer{padding:10px}.chat-composer-shell{gap:7px;padding:7px}.composer .chat-plus-button{width:40px;height:40px;min-width:40px}.composer #sendButton{height:40px;padding:0 12px}.composer #chatInput{height:40px;padding-left:2px;font-size:14px}.chat-action-popover{width:min(310px,calc(100vw - 28px));left:-1px}.composer>p{font-size:10px;line-height:1.5}}
+@media(max-width:600px){.composer{padding:10px}.chat-composer-shell{gap:7px;padding:7px}.composer .chat-plus-button{width:40px;height:40px;min-width:40px}.composer #sendButton{width:40px;min-width:40px;height:40px;padding:0}.composer #chatInput{height:40px;padding-left:2px;font-size:14px}.chat-action-popover{width:min(310px,calc(100vw - 28px));left:-1px}.composer>p{font-size:10px;line-height:1.5}}
 </style>
 </head>
 <body>
@@ -250,7 +250,7 @@ body.piosales-view.piosales-compact .topbar-module{display:block;max-width:130px
                   </section>
                 </div>
               </div>
-              <form id="chatForm" autocomplete="off"><input id="chatInput" maxlength="3000" placeholder="Tulis pesan atau pekerjaan yang ingin dibantu…" aria-label="Pesan untuk PioBot"><button id="sendButton" aria-label="Kirim pesan">Kirim ↗</button></form>
+              <form id="chatForm" autocomplete="off"><input id="chatInput" maxlength="3000" placeholder="Tulis pesan atau pekerjaan yang ingin dibantu…" aria-label="Pesan untuk PioBot"><button id="sendButton" type="submit" aria-label="Kirim pesan" title="Kirim pesan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
             </div>
             <p class="small muted chat-composer-hint">Bisa lampirkan TXT, PDF, gambar, atau file dari Google Drive (maksimal 2 MB untuk file lokal). Jangan kirim data rahasia.</p>
           </div>
@@ -301,7 +301,7 @@ let busy=false, googleConnected=false, clickupConnected=false, googleConfigured=
 function notify(text){toast.textContent=text;toast.classList.add("show");setTimeout(function(){toast.classList.remove("show")},3400)}
 function safeDate(value){if(!value)return "Waktu belum tersedia";const d=new Date(value);return isNaN(d)?value:d.toLocaleString("id-ID",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}
 function addBubble(role,text){const el=document.createElement("div");el.className="bubble "+(role==="user"?"user":"bot");el.textContent=text;messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el}
-function setBusy(v){busy=v;sendButton.disabled=v;chatInput.disabled=v;qs("#chatFile").disabled=v;qs("#chatPlusButton").disabled=v;if(v)closeChatActionPopover();sendButton.textContent=v?"Menjawab…":"Kirim ↗"}
+function setBusy(v){busy=v;sendButton.disabled=v;chatInput.disabled=v;qs("#chatFile").disabled=v;qs("#chatPlusButton").disabled=v;if(v)closeChatActionPopover();const label=v?"PioBot sedang menjawab":"Kirim pesan";sendButton.setAttribute("aria-label",label);sendButton.title=label}
 async function api(url,options){const response=await fetch(url,options||{});const data=await response.json().catch(function(){return {}});if(!response.ok)throw new Error(data.error||"Permintaan gagal. Coba lagi.");return data}
 function setPendingChatAttachment(attachment){pendingChatAttachment=attachment;const chip=qs("#chatAttachmentName");chip.textContent=attachment?"📎 "+attachment.name:"";chip.hidden=!attachment;status("chatAttachmentStatus",attachment?(attachment.truncated?"Isi teks lampiran dibatasi 30.000 karakter.":"File siap dikirim ke PioBot."):"",attachment?"ok":"")}
 
