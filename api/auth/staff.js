@@ -58,23 +58,23 @@ module.exports = async function handler(req, res) {
       let credential = await staffCredential();
       if (!credential) {
         const initial = String(process.env.PIOBOT_STAFF_INITIAL_PASSWORD || "");
-        if (!initial || password !== initial || password.length !== 8) return res.status(401).json({ error: "Kode staf tidak valid atau akses staf belum disetel oleh pemilik." });
+        if (!initial || password !== initial || password.length !== 8) return res.status(401).json({ error: "Kode Admin tidak valid atau akses Admin belum disetel oleh pemilik." });
         const passwordHash = await hashPassword(password);
         await saveStaffCredential(passwordHash, true);
         credential = await staffCredential();
       } else if (!await verifyPassword(password, credential.password_hash)) {
-        return res.status(401).json({ error: "Kode atau kata sandi staf tidak valid." });
+        return res.status(401).json({ error: "Kode atau sandi Admin tidak valid." });
       }
       setAuth(res, { role: "staff", force_change: Boolean(credential.force_change), credential_updated_at: credential.updated_at });
       return res.status(200).json({ ok: true, role: "staff", mustChangePassword: Boolean(credential.force_change) });
     }
 
     if (action === "change-password") {
-      if (!current || current.role !== "staff") return res.status(403).json({ error: "Masuk sebagai staf terlebih dahulu." });
+      if (!current || current.role !== "staff") return res.status(403).json({ error: "Login Admin terlebih dahulu." });
       const oldPassword = String(body.oldPassword || "");
       const newPassword = String(body.newPassword || "");
       const credential = await staffCredential();
-      if (!credential || !await verifyPassword(oldPassword, credential.password_hash)) return res.status(401).json({ error: "Kata sandi saat ini tidak cocok." });
+      if (!credential || (!current.force_change && !await verifyPassword(oldPassword, credential.password_hash))) return res.status(401).json({ error: "Sandi saat ini tidak cocok." });
       if (newPassword.length < 12 || newPassword.length > 128) return res.status(400).json({ error: "Kata sandi baru harus 12–128 karakter." });
       await saveStaffCredential(await hashPassword(newPassword), false);
       const updated = await staffCredential();
@@ -83,10 +83,10 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === "reset") {
-      if (!current || current.role !== "owner") return res.status(403).json({ error: "Hanya pemilik yang dapat mereset sandi staf." });
+      if (!current || current.role !== "owner") return res.status(403).json({ error: "Hanya pemilik yang dapat mereset sandi Admin." });
       const activationCode = generateActivationCode();
       await saveStaffCredential(await hashPassword(activationCode), true);
-      return res.status(200).json({ ok: true, activationCode, message: "Kode baru hanya ditampilkan sekali. Bagikan langsung kepada staf." });
+      return res.status(200).json({ ok: true, activationCode, message: "Kode baru hanya ditampilkan sekali. Berikan langsung kepada Admin." });
     }
 
     if (action === "logout") {
@@ -98,6 +98,6 @@ module.exports = async function handler(req, res) {
   } catch (error) {
     console.error("Staff authentication unavailable", error && error.status || error && error.name || "unknown");
     if (error && [401, 403, 404].includes(error.status)) return res.status(503).json({ error: "Setup akses PioBot belum selesai. Jalankan migrasi Supabase dan isi secret server." });
-    return res.status(503).json({ error: error && error.message || "Akses staf belum dapat diproses." });
+    return res.status(503).json({ error: error && error.message || "Akses Admin belum dapat diproses." });
   }
 };

@@ -163,7 +163,7 @@ async function downloadFile(access, id, res, staffOnly = false) {
   const metaResponse = await fetch(`${DRIVE}/${encodeURIComponent(id)}?fields=id,name,mimeType,size,webContentLink,appProperties,capabilities(canDownload)`, { headers: { Authorization: `Bearer ${access}` } });
   const meta = await metaResponse.json().catch(() => ({}));
   if (!metaResponse.ok) return error(res, metaResponse.status, "Tidak dapat membaca file Drive. Hubungkan ulang Google jika aksesnya berubah.");
-  if (staffOnly && !(meta.appProperties && meta.appProperties.piobotPurpose === "piobot-content-draft")) return error(res, 403, "Reviewer hanya dapat membuka draf PioGrowth/PioStudio yang dibuat PioBot.");
+  if (staffOnly && !(meta.appProperties && meta.appProperties.piobotPurpose === "piobot-content-draft")) return error(res, 403, "Admin hanya dapat membuka draf PioGrowth/PioStudio yang dibuat PioBot.");
   if (meta.capabilities && meta.capabilities.canDownload === false) return error(res, 403, "Google tidak mengizinkan unduhan untuk file ini.");
 
   let mimeType = meta.mimeType || "application/octet-stream";
@@ -197,7 +197,7 @@ async function readFileForChat(access, id, staffOnly = false) {
   const metaResponse = await fetch(`${DRIVE}/${encodeURIComponent(id)}?fields=id,name,mimeType,size,appProperties,capabilities(canDownload)`, { headers: { Authorization: `Bearer ${access}` } });
   const meta = await metaResponse.json().catch(() => ({}));
   if (!metaResponse.ok) throw Object.assign(new Error("Tidak dapat membaca informasi file Drive. Hubungkan ulang Google jika izin berubah."), { status: metaResponse.status });
-  if (staffOnly && !(meta.appProperties && meta.appProperties.piobotPurpose === "piobot-content-draft")) throw Object.assign(new Error("Reviewer hanya dapat menganalisis draf PioGrowth/PioStudio yang dibuat PioBot."), { status: 403 });
+  if (staffOnly && !(meta.appProperties && meta.appProperties.piobotPurpose === "piobot-content-draft")) throw Object.assign(new Error("Admin hanya dapat menganalisis draf PioGrowth/PioStudio yang dibuat PioBot."), { status: 403 });
   if (meta.capabilities && meta.capabilities.canDownload === false) throw Object.assign(new Error("File ini tidak mengizinkan unduhan untuk analisis."), { status: 403 });
 
   let mimeType = meta.mimeType || "application/octet-stream";

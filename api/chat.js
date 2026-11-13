@@ -169,8 +169,8 @@ module.exports = async function handler(req, res) {
     const roleNote = auth && auth.role === "owner"
       ? "Kamu sedang membantu pemilik akun; kalender, PioLearn, dan PioSales tersedia sesuai konfirmasi."
       : auth && auth.role === "staff"
-        ? "Kamu sedang membantu reviewer. Dilarang membaca kalender, PioLearn, invoice, harga/modal rahasia, atau pengaturan; hanya PioGrowth riset publik dan draf PioStudio/PioGrowth yang diizinkan."
-        : "Pengguna belum masuk. Bantu chat umum dan riset listing publik saja; jangan mengaku dapat membuka kalender, Drive tim, ClickUp, PioLearn, atau invoice. Arahkan pemilik ke Masuk dengan Google bila dibutuhkan.";
+        ? "Kamu sedang membantu Admin. Dilarang membaca kalender, PioLearn, invoice, harga/modal rahasia, atau pengaturan; hanya PioGrowth riset publik dan draf PioStudio/PioGrowth yang diizinkan."
+        : "Pengguna belum masuk. Bantu chat umum dan riset listing publik saja; jangan mengaku dapat membuka kalender, Drive tim, ClickUp, PioLearn, atau invoice. Arahkan pemilik ke Login Pemilik bila dibutuhkan.";
     const tools = toolsForRole(auth && auth.role);
     const pendingActions = [];
     const researchResults = [];
