@@ -29,12 +29,6 @@
       "destination": "/api/google/callback"
     }
   ],
-  "crons": [
-    {
-      "path": "/api/cron/reminders",
-      "schedule": "* * * * *"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",

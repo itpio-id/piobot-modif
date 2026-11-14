@@ -75,7 +75,7 @@ module.exports = async function handler(req, res) {
   const vapidPublic = String(process.env.VAPID_PUBLIC_KEY || "");
   const vapidPrivate = String(process.env.VAPID_PRIVATE_KEY || "");
   const database = supabaseConfig();
-  if (!database.url || !database.key || !vapidPublic || !vapidPrivate) return res.status(200).json({ ok: true, configured: false, sent: 0 });
+  if (!database.url || !database.key || !vapidPublic || !vapidPrivate) return res.status(503).json({ ok: false, configured: false, error: "Pengingat belum disetel. Periksa Supabase URL/service role key dan kunci VAPID di Vercel." });
   try {
     webpush.setVapidDetails(String(process.env.VAPID_SUBJECT || "mailto:itpio@itpio.id"), vapidPublic, vapidPrivate);
     const rows = await supabaseRequest("piobot_push_subscriptions?select=endpoint,subscription");
@@ -90,7 +90,8 @@ module.exports = async function handler(req, res) {
       if (!startText) continue;
       const start = new Date(startText);
       const minutes = (start.getTime() - now.getTime()) / 60_000;
-      if (minutes < 55 || minutes > 65) continue;
+      // Accept a wider delivery window for external schedulers that may drift a few minutes.
+      if (minutes < 45 || minutes > 75) continue;
       const key = `event:${event.id}:${start.toISOString()}`;
       const title = event.summary || "Acara kalender";
       if (await sendToOwner(rows, key, "event-reminder", event.id, {
@@ -101,7 +102,8 @@ module.exports = async function handler(req, res) {
     }
 
     const local = jakartaParts(now);
-    if (local.weekday === "Sun" && local.hour === "19" && local.minute === "00") {
+    // The dedupe key below makes this safe when the scheduler calls more than once in this hour.
+    if (local.weekday === "Sun" && local.hour === "19") {
       const year = Number(local.year), month = Number(local.month), day = Number(local.day);
       const nextMonday = new Date(Date.UTC(year, month - 1, day + 1));
       const weekEnd = new Date(nextMonday.getTime() + 7 * 86400000);
