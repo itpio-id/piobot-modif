@@ -1,0 +1,117 @@
+{
+  "id": "pbPSPostCron0001",
+  "name": "PioStudio · PSPost Cron Tgl 28",
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "nodes": [
+    {
+      "id": "cron-hermes-tgl-28-09-00",
+      "name": "Cron Hermes · tgl 28 09.00",
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "8a3d2e61-0c4f-4b9a-b1d5-7e6f2a9c3b02",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "piostudio-pspost",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pbWebhookSecret1",
+          "name": "PioBot Webhook Secret (cron Hermes)"
+        }
+      }
+    },
+    {
+      "id": "siapkan-tiket-bulan-depan",
+      "name": "Siapkan tiket bulan depan",
+      "position": [
+        240,
+        300
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "\nconst now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));\nconst next = new Date(now.getFullYear(), now.getMonth() + 1, 1);\nconst month = next.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });\nreturn [{ json: {\n  p_kind: 'pspost',\n  p_title: 'Rencana posting ' + month,\n  p_request: {\n    month,\n    channel: 'TikTok + YouTube Shorts',\n    brief: 'Susun rencana posting PioStudio untuk ' + month + ': cek algoritma terbaru, maksimal 3 konten per minggu, sertakan kebutuhan produksi.'\n  }\n} }];"
+      }
+    },
+    {
+      "id": "buat-tiket-pspost-db-lokal-",
+      "name": "Buat tiket PSPost (DB lokal)",
+      "position": [
+        480,
+        300
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "http://piobot-rest:3000/rpc/piobot_agent_create",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pbAgentSecret001",
+          "name": "PioBot Agent Secret (Supabase RPC)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Hermes · tgl 28 09.00": {
+      "main": [
+        [
+          {
+            "node": "Siapkan tiket bulan depan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Siapkan tiket bulan depan": {
+      "main": [
+        [
+          {
+            "node": "Buat tiket PSPost (DB lokal)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

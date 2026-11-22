@@ -79,7 +79,7 @@ function serveStatic(pathname, res) {
     return;
   }
   const route = decoded.replace(/\/+$/, "") || "/";
-  const relative = route === "/" || route === "/blueprint" ? "index.html" : route.replace(/^[/\\]+/, "");
+  const relative = route === "/" || route === "/blueprint" ? "index.html" : route === "/acc" ? "acc.html" : route.replace(/^[/\\]+/, "");
   let file = path.resolve(ROOT, relative);
   if (!file.startsWith(ROOT + path.sep)) { sendJson(res, 404, { error: "Tidak ditemukan." }); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
@@ -134,7 +134,7 @@ server.on("error", error => {
   process.exitCode = 1;
 });
 
-server.listen(PORT, "127.0.0.1", () => {
+server.listen(PORT, process.env.HOST || "127.0.0.1", () => {
   console.log(`PioBot lokal berjalan di http://127.0.0.1:${PORT}/`);
   console.log("Server hanya menerima koneksi dari PC ini.");
 });

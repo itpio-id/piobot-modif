@@ -1,0 +1,165 @@
+# PioBot stack lokal: 9Router + n8n + Hermes Agent + database & web PioBot, satu network piobot-net.
+# Jalankan: docker compose -f docker/docker-compose.yml up -d
+# Rahasia di docker/.env (gitignored). Detail & cara sambung: docker/README.md
+
+services:
+  9router:
+    image: node:22-alpine
+    container_name: 9router
+    restart: unless-stopped
+    command: ["npx", "-y", "9router"]
+    tty: true
+    stdin_open: true
+    environment:
+      - PORT=20128
+      - HOSTNAME=0.0.0.0
+      # Password login dashboard 9Router. Isi di docker/.env (jangan di-commit):
+      # NINEROUTER_PASSWORD=passwordkamu
+      - INITIAL_PASSWORD=${NINEROUTER_PASSWORD}
+    volumes:
+      - 9router-data:/root/.9router
+    # Dashboard hanya bisa dibuka dari laptop ini, TIDAK dari jaringan/internet.
+    # Hermes & n8n memanggilnya lewat network piobot-net: http://9router:20128/v1
+    ports:
+      - "127.0.0.1:20128:20128"
+    networks:
+      - piobot-net
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    environment:
+      - GENERIC_TIMEZONE=Asia/Jakarta
+      - TZ=Asia/Jakarta
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_SECURE_COOKIE=false
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_RUNNERS_ENABLED=true
+    volumes:
+      - n8n-data:/home/node/.n8n
+    ports:
+      - "127.0.0.1:5678:5678"
+    networks:
+      - piobot-net
+
+  hermes-agent:
+    image: nousresearch/hermes-agent
+    container_name: hermes-agent
+    restart: unless-stopped
+    command: ["gateway", "run"]
+    environment:
+      - HERMES_DASHBOARD=1
+      - HERMES_DASHBOARD_HOST=0.0.0.0
+      - HERMES_DASHBOARD_PORT=9119
+      - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin
+      # Isi di docker/.env (jangan di-commit):
+      # HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=passwordkamu
+      - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=${HERMES_DASHBOARD_BASIC_AUTH_PASSWORD}
+    volumes:
+      - hermes-data:/opt/data
+    # API server Hermes (/v1, butuh API_SERVER_KEY) hanya dari laptop ini.
+    # n8n memanggilnya lewat piobot-net: http://hermes-agent:8642/v1
+    # (config Hermes: platforms.api_server.extra.host = 0.0.0.0)
+    ports:
+      - "127.0.0.1:8642:8642"
+      - "127.0.0.1:9119:9119"
+    networks:
+      - piobot-net
+
+  # ---------------------------------------------------------------- Database lokal PioBot
+  # Postgres + PostgREST menggantikan Supabase cloud. API-nya sama (REST + RPC),
+  # jadi kode web & workflow n8n tidak perlu diubah selain URL-nya.
+  piobot-db:
+    image: postgres:16-alpine
+    container_name: piobot-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=piobot
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PIOBOT_DB_AUTHENTICATOR_PASSWORD=${PIOBOT_DB_AUTHENTICATOR_PASSWORD}
+      - PIOBOT_AGENT_SECRET=${PIOBOT_AGENT_SECRET}
+      - TZ=Asia/Jakarta
+    volumes:
+      - piobot-db-data:/var/lib/postgresql/data
+      # Migrasi dijalankan sekali saat volume data masih kosong, sesuai urutan nama file.
+      - ./postgres/00-supabase-compat.sh:/docker-entrypoint-initdb.d/00-supabase-compat.sh:ro
+      - ./postgres/01-piosales-base.sql:/docker-entrypoint-initdb.d/01-piosales-base.sql:ro
+      - ../piosales-app/supabase/piosales_auth.sql:/docker-entrypoint-initdb.d/02-piosales-auth.sql:ro
+      - ../supabase/piobot_unified_workspace.sql:/docker-entrypoint-initdb.d/03-piobot-unified-workspace.sql:ro
+      - ../supabase/pioassist_phase1.sql:/docker-entrypoint-initdb.d/04-pioassist-phase1.sql:ro
+      - ./postgres/90-agent-secret.sh:/docker-entrypoint-initdb.d/90-agent-secret.sh:ro
+    # Untuk alat DB di laptop (psql, DBeaver): localhost:54329, user postgres.
+    ports:
+      - "127.0.0.1:54329:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d piobot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - piobot-net
+
+  piobot-rest:
+    image: postgrest/postgrest:v12.2.3
+    container_name: piobot-rest
+    restart: unless-stopped
+    environment:
+      - PGRST_DB_URI=postgres://authenticator:${PIOBOT_DB_AUTHENTICATOR_PASSWORD}@piobot-db:5432/piobot
+      - PGRST_DB_SCHEMAS=public
+      - PGRST_DB_ANON_ROLE=anon
+      - PGRST_JWT_SECRET=${PIOBOT_DB_JWT_SECRET}
+    depends_on:
+      piobot-db:
+        condition: service_healthy
+    # Tanpa port di host: hanya piobot-web dan n8n (via piobot-net) yang memanggilnya.
+    networks:
+      - piobot-net
+
+  # ---------------------------------------------------------------- Web PioBot lokal
+  piobot-web:
+    image: node:24-alpine
+    container_name: piobot-web
+    restart: unless-stopped
+    working_dir: /app
+    command: ["sh", "-c", "npm ci --omit=dev --no-audit --no-fund --ignore-scripts && node dev-server.cjs"]
+    env_file:
+      - .env.web
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8765
+      - TZ=Asia/Jakarta
+      - SUPABASE_URL=http://piobot-rest:3000
+      - SUPABASE_REST_URL=http://piobot-rest:3000
+      - SUPABASE_SERVICE_ROLE_KEY=${PIOBOT_DB_SERVICE_KEY}
+      - CRON_SECRET=${PIOBOT_CRON_SECRET}
+      # Chat PioBot lewat 9Router (format pesan Claude + tools), bukan KIE.
+      - CHAT_API_URL=http://9router:20128/v1/messages
+      - CHAT_MODEL=gemini/gemini-3.5-flash-lite
+      - CHAT_API_KEY=${NINEROUTER_API_KEY}
+    volumes:
+      - ..:/app
+      - piobot-web-modules:/app/node_modules
+    ports:
+      - "127.0.0.1:8765:8765"
+    depends_on:
+      - piobot-rest
+    networks:
+      - piobot-net
+
+volumes:
+  piobot-db-data:
+  piobot-web-modules:
+  9router-data:
+  n8n-data:
+  hermes-data:
+    name: hermes_isolated_data
+    external: true
+
+networks:
+  piobot-net:
+    name: piobot-net

@@ -1,5 +1,7 @@
-const API_URL = "https://api.kie.ai/claude/v1/messages";
-const MODEL = "claude-opus-5";
+// Default: KIE (Claude Opus 5). Stack lokal mengarahkan chat ke 9Router lewat CHAT_API_URL/CHAT_MODEL/CHAT_API_KEY.
+const API_URL = process.env.CHAT_API_URL || "https://api.kie.ai/claude/v1/messages";
+const MODEL = process.env.CHAT_MODEL || "claude-opus-5";
+const UPSTREAM_TIMEOUT_MS = 55_000;
 const runResearch = require("./_lib/research");
 const { verifyAuth } = require("./_lib/auth");
 const chatTools = require("./_lib/chat-tools");
@@ -10,8 +12,10 @@ const RATE_LIMIT = 12;
 const requestCounts = new Map();
 
 const SYSTEM_PROMPT = [
-  "Identitasmu adalah PioBot, Karyawan Digital ITPIO di Surabaya–Sidoarjo. Selalu berbicara sebagai PioBot. Jangan memperkenalkan diri sebagai Claude, Claude Code, Anthropic, GPT, atau model AI lain. Jika ditanya siapa dirimu, jelaskan singkat bahwa kamu PioBot dan sebutkan kemampuan yang relevan.",
+  "Identitasmu adalah PioBot, Karyawan Digital ITPIO. Selalu berbicara sebagai PioBot. Jangan memperkenalkan diri sebagai Claude, Claude Code, Anthropic, GPT, atau model AI lain. Jika ditanya siapa dirimu, jelaskan singkat bahwa kamu PioBot dan sebutkan kemampuan yang relevan.",
   "Bantu pengguna secara praktis untuk chat layanan, menyusun jadwal dan reminder, membuat atau merevisi materi kelas AI, nota dan penawaran, riset harga serta spesifikasi laptop/HP/tablet, konten foto/video, website, aplikasi Windows, dan ide SaaS.",
+  "Aturan bahasa wajib di setiap balasan: sebut dirimu \"aku\" (jangan pernah \"saya\"), sapa pengguna \"kamu\" (jangan pernah \"Anda\"), jangan pernah memakai tanda pisah panjang (— atau –) dan gantilah dengan koma, titik, atau titik dua, serta jangan pernah menyebut Surabaya atau Sidoarjo.",
+  "Format balasan untuk tampilan chat: tulis sebagai teks biasa yang rapi, tanpa format Markdown seperti **tebal**, # judul, tabel, atau backtick. Untuk daftar pakai angka 1. 2. 3. atau baris baru, dan pisahkan bagian dengan baris kosong.",
   "Gunakan bahasa Indonesia yang natural, hangat, profesional, dan tidak kaku; ikuti bahasa pengguna bila mereka memilih bahasa lain. Hindari jawaban generik dan berulang. Gunakan konteks percakapan, beri hasil yang langsung bisa dipakai, dan sesuaikan panjang jawaban dengan permintaan.",
   "Ikuti Blueprint aktif: jadwal harus memeriksa kalender dan bentrok; alur PioGrowth menggali kebutuhan lalu riset pasar, memverifikasi stok/modal, dan baru menyiapkan penawaran; PioStudio maksimal 3 konten per minggu, TikTok dan YouTube Shorts aktif, WA/Telegram berupa draf, Instagram nonaktif sampai dikonfirmasi; PioLearn hanya untuk pemilik.",
   "Sebelum jadwal ditulis, periksa kalender, buffer 20%, bentrok waktu, lalu minta persetujuan melalui tombol. Bila Google gagal dibaca, jangan menyatakan waktu kosong. Jangan membuat acara saat tool hanya mengusulkan. Staf tidak boleh melihat atau mengubah kalender.",
@@ -100,7 +104,7 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "GET") {
-    return res.status(200).json({ configured: Boolean(process.env.KIE_API_KEY) });
+    return res.status(200).json({ configured: Boolean(process.env.CHAT_API_KEY || process.env.KIE_API_KEY) });
   }
   if (req.method !== "POST") {
     res.setHeader("Allow", "GET, POST");
@@ -110,7 +114,7 @@ module.exports = async function handler(req, res) {
     return res.status(429).json({ error: "Batas demo tercapai. Tunggu satu menit lalu coba lagi." });
   }
 
-  const apiKey = process.env.KIE_API_KEY;
+  const apiKey = process.env.CHAT_API_KEY || process.env.KIE_API_KEY;
   if (!apiKey) {
     return res.status(503).json({ error: "API key belum dikonfigurasi di environment Vercel." });
   }
@@ -169,8 +173,8 @@ module.exports = async function handler(req, res) {
     const roleNote = auth && auth.role === "owner"
       ? "Kamu sedang membantu pemilik akun; kalender, PioLearn, dan PioSales tersedia sesuai konfirmasi."
       : auth && auth.role === "staff"
-        ? "Kamu sedang membantu reviewer. Dilarang membaca kalender, PioLearn, invoice, harga/modal rahasia, atau pengaturan; hanya PioGrowth riset publik dan draf PioStudio/PioGrowth yang diizinkan."
-        : "Pengguna belum masuk. Bantu chat umum dan riset listing publik saja; jangan mengaku dapat membuka kalender, Drive tim, ClickUp, PioLearn, atau invoice. Arahkan pemilik ke Masuk dengan Google bila dibutuhkan.";
+        ? "Kamu sedang membantu Admin. Dilarang membaca kalender, PioLearn, invoice, harga/modal rahasia, atau pengaturan; hanya PioGrowth riset publik dan draf PioStudio/PioGrowth yang diizinkan."
+        : "Pengguna belum masuk. Bantu chat umum dan riset listing publik saja; jangan mengaku dapat membuka kalender, Drive tim, ClickUp, PioLearn, atau invoice. Arahkan pemilik ke Login Pemilik bila dibutuhkan.";
     const tools = toolsForRole(auth && auth.role);
     const pendingActions = [];
     const researchResults = [];
@@ -193,7 +197,8 @@ module.exports = async function handler(req, res) {
       const upstream = await fetch(API_URL, {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
       });
       const rawBody = await upstream.text();
       let data = {};

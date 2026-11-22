@@ -25,6 +25,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/acc",
+      "destination": "/acc.html"
+    },
+    {
       "source": "/api/auth/callback/google",
       "destination": "/api/google/callback"
     }
@@ -32,7 +36,7 @@
   "crons": [
     {
       "path": "/api/cron/reminders",
-      "schedule": "* * * * *"
+      "schedule": "0 12 * * *"
     }
   ],
   "headers": [

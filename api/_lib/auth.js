@@ -42,7 +42,7 @@ async function requireRole(req, res, roles) {
     return null;
   }
   if (session.role === "staff" && session.force_change && roles.includes("staff")) {
-    res.status(403).json({ error: "Ubah kata sandi staf sebelum memakai fitur internal." });
+    res.status(403).json({ error: "Buat sandi Admin sebelum memakai fitur internal." });
     return null;
   }
   if (!roles.includes(session.role)) {
