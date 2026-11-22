@@ -223,9 +223,37 @@ const pspost = {
   pinData: {}
 };
 
+// ---------------------------------------------------------------- Pengingat kalender per menit
+// Vercel Hobby hanya mengizinkan cron harian, jadi n8n yang memanggil /api/cron/reminders tiap menit.
+// Credential pbCronSecret0001: header Authorization = "Bearer <CRON_SECRET Vercel Production>".
+CRED.cron = { httpHeaderAuth: { id: "pbCronSecret0001", name: "PioBot CRON_SECRET (Vercel)" } };
+const reminders = {
+  id: "pbReminderCron01",
+  name: "PioBot · Pengingat Kalender (tiap menit)",
+  active: false,
+  settings: { executionOrder: "v1", timezone: "Asia/Jakarta", saveDataSuccessExecution: "none", saveDataErrorExecution: "all" },
+  nodes: [
+    schedule("Tiap menit", [0, 300], { field: "minutes", minutesInterval: 1 }),
+    {
+      id: "panggil-reminders", name: "Panggil /api/cron/reminders", position: [240, 300],
+      type: "n8n-nodes-base.httpRequest", typeVersion: 4.2,
+      parameters: {
+        method: "GET",
+        url: "https://pioassist.itpio.id/api/cron/reminders",
+        authentication: "genericCredentialType",
+        genericAuthType: "httpHeaderAuth",
+        options: { timeout: 60000 }
+      },
+      credentials: CRED.cron
+    }
+  ],
+  connections: { "Tiap menit": link("Panggil /api/cron/reminders") },
+  pinData: {}
+};
+
 const out = path.join(__dirname, "workflows");
 fs.mkdirSync(out, { recursive: true });
-for (const wf of [router, pspost]) {
+for (const wf of [router, pspost, reminders]) {
   const file = path.join(out, wf.id + ".json");
   fs.writeFileSync(file, JSON.stringify(wf, null, 2) + "\n");
   console.log("wrote", path.relative(process.cwd(), file));
