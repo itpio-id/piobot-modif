@@ -1,5 +1,7 @@
-const API_URL = "https://api.kie.ai/claude/v1/messages";
-const MODEL = "claude-opus-5";
+// Default: KIE (Claude Opus 5). Stack lokal mengarahkan chat ke 9Router lewat CHAT_API_URL/CHAT_MODEL/CHAT_API_KEY.
+const API_URL = process.env.CHAT_API_URL || "https://api.kie.ai/claude/v1/messages";
+const MODEL = process.env.CHAT_MODEL || "claude-opus-5";
+const UPSTREAM_TIMEOUT_MS = 55_000;
 const runResearch = require("./_lib/research");
 const { verifyAuth } = require("./_lib/auth");
 const chatTools = require("./_lib/chat-tools");
@@ -100,7 +102,7 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "GET") {
-    return res.status(200).json({ configured: Boolean(process.env.KIE_API_KEY) });
+    return res.status(200).json({ configured: Boolean(process.env.CHAT_API_KEY || process.env.KIE_API_KEY) });
   }
   if (req.method !== "POST") {
     res.setHeader("Allow", "GET, POST");
@@ -110,7 +112,7 @@ module.exports = async function handler(req, res) {
     return res.status(429).json({ error: "Batas demo tercapai. Tunggu satu menit lalu coba lagi." });
   }
 
-  const apiKey = process.env.KIE_API_KEY;
+  const apiKey = process.env.CHAT_API_KEY || process.env.KIE_API_KEY;
   if (!apiKey) {
     return res.status(503).json({ error: "API key belum dikonfigurasi di environment Vercel." });
   }
@@ -193,7 +195,8 @@ module.exports = async function handler(req, res) {
       const upstream = await fetch(API_URL, {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
       });
       const rawBody = await upstream.text();
       let data = {};

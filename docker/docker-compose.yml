@@ -137,6 +137,10 @@ services:
       - SUPABASE_REST_URL=http://piobot-rest:3000
       - SUPABASE_SERVICE_ROLE_KEY=${PIOBOT_DB_SERVICE_KEY}
       - CRON_SECRET=${PIOBOT_CRON_SECRET}
+      # Chat PioBot lewat 9Router (format pesan Claude + tools), bukan KIE.
+      - CHAT_API_URL=http://9router:20128/v1/messages
+      - CHAT_MODEL=gemini/gemini-3.5-flash-lite
+      - CHAT_API_KEY=${NINEROUTER_API_KEY}
     volumes:
       - ..:/app
       - piobot-web-modules:/app/node_modules

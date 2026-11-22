@@ -11,6 +11,7 @@ browser ──127.0.0.1:8765──▶ piobot-web    (web PioBot + /acc, dev-serv
            127.0.0.1:54329─▶ piobot-db     (Postgres, untuk psql/DBeaver)
 
 piobot-web ──service_role JWT──▶ piobot-rest:3000 (PostgREST) ──▶ piobot-db
+piobot-web /api/chat ──▶ 9router /v1/messages (gemini/gemini-3.5-flash-lite; di Vercel tetap KIE)
 Hermes cron (tanpa LLM)
   ├─ tiap menit   ──▶ n8n webhook piobot-router      ──▶ Router Tiket
   ├─ tiap menit   ──▶ piobot-web /api/cron/reminders  (pengingat kalender)
@@ -37,7 +38,7 @@ Rahasia (semua gitignored):
 
 | File | Isi |
 |---|---|
-| `docker/.env` | password 9Router/Hermes, `PIOBOT_AGENT_SECRET`, password & JWT database lokal, `PIOBOT_N8N_WEBHOOK_SECRET`, `PIOBOT_CRON_SECRET` |
+| `docker/.env` | password 9Router/Hermes, `NINEROUTER_API_KEY` (chat web lokal), `PIOBOT_AGENT_SECRET`, password & JWT database lokal, `PIOBOT_N8N_WEBHOOK_SECRET`, `PIOBOT_CRON_SECRET` |
 | `docker/.env.web` | kunci aplikasi web: `INTEGRATION_SECRET`, VAPID, KIE/Gemini/Apify/ClickUp, sandi Admin lokal, `GOOGLE_CLIENT_ID/SECRET` |
 
 Contoh nama variabel: `docker/env.example`.
