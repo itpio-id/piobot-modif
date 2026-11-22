@@ -10,28 +10,32 @@
   },
   "nodes": [
     {
-      "id": "tiap-menit",
-      "name": "Tiap menit",
+      "id": "cron-hermes-tiap-menit",
+      "name": "Cron Hermes · tiap menit",
       "position": [
         0,
         300
       ],
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
+      "webhookId": "5f0c9a52-6b1e-4d8e-9a77-3c2f1b0d4e01",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
       "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "minutes",
-              "minutesInterval": 1
-            }
-          ]
+        "httpMethod": "POST",
+        "path": "piobot-router",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pbWebhookSecret1",
+          "name": "PioBot Webhook Secret (cron Hermes)"
         }
       }
     },
     {
-      "id": "ambil-tiket-supabase-",
-      "name": "Ambil tiket (Supabase)",
+      "id": "ambil-tiket-db-lokal-",
+      "name": "Ambil tiket (DB lokal)",
       "position": [
         220,
         300
@@ -40,16 +44,12 @@
       "typeVersion": 4.2,
       "parameters": {
         "method": "POST",
-        "url": "https://kuupfncfzzghedhbvxkj.supabase.co/rest/v1/rpc/piobot_agent_claim",
+        "url": "http://piobot-rest:3000/rpc/piobot_agent_claim",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "apikey",
-              "value": "sb_publishable_8lo6Z6xGbPEeMMcW0UWRUA_KLQVwUmM"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -279,8 +279,8 @@
       }
     },
     {
-      "id": "laporkan-ke-supabase",
-      "name": "Laporkan ke Supabase",
+      "id": "laporkan-ke-db-lokal",
+      "name": "Laporkan ke DB lokal",
       "position": [
         1780,
         300
@@ -289,16 +289,12 @@
       "typeVersion": 4.2,
       "parameters": {
         "method": "POST",
-        "url": "https://kuupfncfzzghedhbvxkj.supabase.co/rest/v1/rpc/piobot_agent_report",
+        "url": "http://piobot-rest:3000/rpc/piobot_agent_report",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "apikey",
-              "value": "sb_publishable_8lo6Z6xGbPEeMMcW0UWRUA_KLQVwUmM"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -326,18 +322,18 @@
     }
   ],
   "connections": {
-    "Tiap menit": {
+    "Cron Hermes · tiap menit": {
       "main": [
         [
           {
-            "node": "Ambil tiket (Supabase)",
+            "node": "Ambil tiket (DB lokal)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Ambil tiket (Supabase)": {
+    "Ambil tiket (DB lokal)": {
       "main": [
         [
           {
@@ -381,7 +377,7 @@
       "main": [
         [
           {
-            "node": "Laporkan ke Supabase",
+            "node": "Laporkan ke DB lokal",
             "type": "main",
             "index": 0
           }
@@ -443,7 +439,7 @@
       "main": [
         [
           {
-            "node": "Laporkan ke Supabase",
+            "node": "Laporkan ke DB lokal",
             "type": "main",
             "index": 0
           }

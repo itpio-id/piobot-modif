@@ -153,16 +153,19 @@ async function refreshGoogleSession(session, res) {
 }
 
 function supabaseConfig() {
+  const url = String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "").replace(/\/+$/, "");
   return {
-    url: String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "").replace(/\/+$/, ""),
+    url,
+    // Database lokal (PostgREST tanpa prefix /rest/v1) memakai SUPABASE_REST_URL.
+    rest: String(process.env.SUPABASE_REST_URL || (url ? url + "/rest/v1" : "")).replace(/\/+$/, ""),
     key: String(process.env.SUPABASE_SERVICE_ROLE_KEY || "")
   };
 }
 
 async function supabaseRequest(path, options = {}) {
   const cfg = supabaseConfig();
-  if (!cfg.url || !cfg.key) throw new Error("Setup server belum lengkap: SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY.");
-  const response = await fetch(cfg.url + "/rest/v1/" + path, {
+  if (!cfg.rest || !cfg.key) throw new Error("Setup server belum lengkap: SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY.");
+  const response = await fetch(cfg.rest + "/" + path, {
     ...options,
     headers: {
       apikey: cfg.key,

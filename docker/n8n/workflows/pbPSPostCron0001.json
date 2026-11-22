@@ -10,22 +10,26 @@
   },
   "nodes": [
     {
-      "id": "tgl-28-pukul-09-00-wib",
-      "name": "Tgl 28 pukul 09.00 WIB",
+      "id": "cron-hermes-tgl-28-09-00",
+      "name": "Cron Hermes · tgl 28 09.00",
       "position": [
         0,
         300
       ],
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
+      "webhookId": "8a3d2e61-0c4f-4b9a-b1d5-7e6f2a9c3b02",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
       "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "cronExpression",
-              "expression": "0 9 28 * *"
-            }
-          ]
+        "httpMethod": "POST",
+        "path": "piostudio-pspost",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pbWebhookSecret1",
+          "name": "PioBot Webhook Secret (cron Hermes)"
         }
       }
     },
@@ -43,8 +47,8 @@
       }
     },
     {
-      "id": "buat-tiket-pspost-supabase-",
-      "name": "Buat tiket PSPost (Supabase)",
+      "id": "buat-tiket-pspost-db-lokal-",
+      "name": "Buat tiket PSPost (DB lokal)",
       "position": [
         480,
         300
@@ -53,16 +57,12 @@
       "typeVersion": 4.2,
       "parameters": {
         "method": "POST",
-        "url": "https://kuupfncfzzghedhbvxkj.supabase.co/rest/v1/rpc/piobot_agent_create",
+        "url": "http://piobot-rest:3000/rpc/piobot_agent_create",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "apikey",
-              "value": "sb_publishable_8lo6Z6xGbPEeMMcW0UWRUA_KLQVwUmM"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -90,7 +90,7 @@
     }
   ],
   "connections": {
-    "Tgl 28 pukul 09.00 WIB": {
+    "Cron Hermes · tgl 28 09.00": {
       "main": [
         [
           {
@@ -105,7 +105,7 @@
       "main": [
         [
           {
-            "node": "Buat tiket PSPost (Supabase)",
+            "node": "Buat tiket PSPost (DB lokal)",
             "type": "main",
             "index": 0
           }

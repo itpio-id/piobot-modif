@@ -1,29 +1,29 @@
-# Stack lokal PioBot: n8n + Hermes + 9Router (arsitektur Hybrid)
+# PioBot lokal: web + database + n8n + Hermes + 9Router
 
-Semua service ada di `docker-compose.yml`, satu network Docker privat `piobot-net`.
-Port di host hanya `127.0.0.1` (tidak terbuka ke LAN/internet), sesuai advisory
-GHSA-8gmq-j984-vp4r untuk 9Router.
+Semua berjalan di laptop dalam satu network Docker privat `piobot-net`. Port di host hanya `127.0.0.1`
+(tidak terbuka ke LAN/internet; sesuai advisory GHSA-8gmq-j984-vp4r untuk 9Router).
 
 ```
-laptop ──127.0.0.1:20128──▶ 9router        (dashboard 9Router)
-laptop ──127.0.0.1:5678───▶ n8n            (editor n8n)
-laptop ──127.0.0.1:8642───▶ hermes-agent   (API /v1, butuh API_SERVER_KEY)
-laptop ──127.0.0.1:9119───▶ hermes-agent   (dashboard Hermes, basic auth admin)
+browser ──127.0.0.1:8765──▶ piobot-web    (web PioBot + /acc, dev-server.cjs)
+           127.0.0.1:5678──▶ n8n           (editor n8n)
+           127.0.0.1:20128─▶ 9router       (dashboard 9Router)
+           127.0.0.1:8642──▶ hermes-agent  (API /v1)   ·  127.0.0.1:9119 dashboard Hermes
+           127.0.0.1:54329─▶ piobot-db     (Postgres, untuk psql/DBeaver)
 
-hermes-agent ──▶ http://9router:20128/v1      (Bearer NINEROUTER_API_KEY)  model default
-hermes-agent ──▶ http://n8n:5678              (webhook n8n)
-n8n          ──▶ http://hermes-agent:8642/v1  (Bearer API_SERVER_KEY, model "hermes-agent")
-n8n          ──▶ http://9router:20128/v1      (Bearer NINEROUTER_API_KEY)
+piobot-web ──service_role JWT──▶ piobot-rest:3000 (PostgREST) ──▶ piobot-db
+Hermes cron (tanpa LLM)
+  ├─ tiap menit   ──▶ n8n webhook piobot-router      ──▶ Router Tiket
+  ├─ tiap menit   ──▶ piobot-web /api/cron/reminders  (pengingat kalender)
+  └─ tgl 28 09.00 ──▶ n8n webhook piostudio-pspost   ──▶ tiket PSPost bulan depan
+n8n Router Tiket
+  ├─ rpc/piobot_agent_claim  (header x-piobot-agent-secret)
+  ├─ psdraft/psmedia/pspost ──▶ Hermes /v1 (skill piostudio-*) ──▶ 9Router
+  ├─ help                    ──▶ 9Router gemini/gemini-3.5-flash-lite
+  └─ rpc/piobot_agent_report ──▶ awaiting_acc / done / failed
 ```
 
-## Status koneksi (diverifikasi 2026-11-22)
-
-| Arah | Hasil |
-|---|---|
-| Hermes → 9Router `/v1/models` | 200, 14 model |
-| n8n → 9Router `/v1/chat/completions` (`gemini/gemini-3.5-flash-lite`) | 200, ~5 dtk |
-| n8n → Hermes `/v1/chat/completions` (Hermes memakai 9Router) | 200, ~24 dtk |
-| Hermes → n8n `/healthz` | 200 |
+Status tiket: `new → processing → awaiting_acc → (approved → finalizing → done | revision → processing | rejected)`.
+Tiket macet > 15 menit diambil ulang; setelah 3 kali gagal jadi `failed`.
 
 ## Menjalankan
 
@@ -31,99 +31,88 @@ n8n          ──▶ http://9router:20128/v1      (Bearer NINEROUTER_API_KEY)
 docker compose -f docker/docker-compose.yml up -d
 ```
 
-Rahasia di `docker/.env` (gitignored, lihat `docker/env.example`):
-`NINEROUTER_PASSWORD`, `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD`.
-Data Hermes di volume external `hermes_isolated_data` (tidak ikut terhapus `compose down`).
+Buka http://localhost:8765 (workspace) dan http://localhost:8765/acc (ACC Gate).
 
-## Config Hermes (`/opt/data/config.yaml` di volume)
+Rahasia (semua gitignored):
 
-```yaml
-model:
-  default: "gemini/gemini-3.5-flash-lite"
-  provider: "9router"
-  base_url: http://9router:20128/v1
+| File | Isi |
+|---|---|
+| `docker/.env` | password 9Router/Hermes, `PIOBOT_AGENT_SECRET`, password & JWT database lokal, `PIOBOT_N8N_WEBHOOK_SECRET`, `PIOBOT_CRON_SECRET` |
+| `docker/.env.web` | kunci aplikasi web: `INTEGRATION_SECRET`, VAPID, KIE/Gemini/Apify/ClickUp, sandi Admin lokal, `GOOGLE_CLIENT_ID/SECRET` |
 
-providers:
-  9router:
-    base_url: "http://9router:20128/v1"
-    api_mode: chat_completions
-    key_env: "NINEROUTER_API_KEY"   # disimpan di /opt/data/.env
-    request_timeout_seconds: 600
+Contoh nama variabel: `docker/env.example`.
 
-fallback_providers:                 # dicoba bila rate-limit/overload/koneksi gagal
-  - provider: "9router"
-    model: "gemini/gemini-3.8-flash"
-  - provider: "nous"
-    model: "upstage/solar-mini4:free"
+### Login
 
-platforms:
-  api_server:
-    extra:
-      host: 0.0.0.0   # agar n8n bisa memanggil hermes-agent:8642; di host tetap 127.0.0.1
-```
+- **Admin/PioCheck**: tombol Admin di workspace. Sandi saat ini ada di `docker/.env.web` (`PIOBOT_STAFF_LOCAL_PASSWORD`).
+- **Owner (Google)**: isi `GOOGLE_CLIENT_ID` dan `GOOGLE_CLIENT_SECRET` di `docker/.env.web`, daftarkan redirect URI
+  `http://localhost:8765/api/auth/callback/google` di Google Cloud Console, lalu
+  `docker compose -f docker/docker-compose.yml up -d --force-recreate piobot-web`.
 
-Backup di volume: `config.yaml.bak-before-9router-default`, `.env.bak-before-9router-key`.
-Kembali ke Nous: `powershell -File docker/connect-hermes-9router.ps1 -RevertToNous`.
-Ganti key 9Router: `powershell -File docker/connect-hermes-9router.ps1 -NewKey`.
+## Database lokal (`piobot-db` + `piobot-rest`)
 
-## Credential di n8n (sekali saja, lewat UI n8n)
+Postgres 16 + PostgREST menggantikan Supabase cloud dengan API yang sama, jadi kode `api/` tetap memakai
+`supabaseRequest` (`SUPABASE_REST_URL=http://piobot-rest:3000`). Saat volume `piobot-db-data` masih kosong, migrasi
+dijalankan otomatis berurutan:
 
-Salin key ke clipboard tanpa menampilkannya, lalu tempel di n8n:
+1. `postgres/00-supabase-compat.sh` – peran `anon`/`authenticated`/`service_role`/`authenticator`, skema `extensions` & stub `auth`
+2. `postgres/01-piosales-base.sql` – tabel dasar invoice PioSales
+3. `piosales-app/supabase/piosales_auth.sql`
+4. `supabase/piobot_unified_workspace.sql`
+5. `supabase/pioassist_phase1.sql` – tiket, ACC, RPC agen
+6. `postgres/90-agent-secret.sh` – daftarkan hash `PIOBOT_AGENT_SECRET`
 
-```powershell
-docker exec -u hermes hermes-agent sh -c "grep '^API_SERVER_KEY=' /opt/data/.env | cut -d= -f2-" | Set-Clipboard
-```
+Migrasi baru untuk database yang sudah ada: jalankan manual, mis.
+`docker exec -i piobot-db psql -U postgres -d piobot < supabase/<file>.sql`.
 
-1. **Hermes** — Credentials → New → *OpenAI*:
-   Base URL `http://hermes-agent:8642/v1`, API key = clipboard. Model: `hermes-agent`.
+Data lama di Supabase cloud (invoice, token Google, langganan push) tidak ikut pindah.
+
+## Hermes
+
+- Model default lewat 9Router (`gemini/gemini-3.5-flash-lite`), fallback `gemini-3.8-flash` lalu Nous.
+- Skill PioStudio: `hermes-skills/piobot/*` → `/opt/data/skills/piobot/`.
+- Cron (mode `--no-agent`, tanpa token LLM): `hermes-scripts/*.py` → `/opt/data/scripts/`, secret dibaca dari `/opt/data/.env`.
 
 ```powershell
-docker exec -u hermes hermes-agent sh -c "grep '^NINEROUTER_API_KEY=' /opt/data/.env | cut -d= -f2-" | Set-Clipboard
+docker exec -u hermes hermes-agent hermes cron list
 ```
 
-2. **9Router** — Credentials → New → *OpenAI*:
-   Base URL `http://9router:20128/v1`, API key = clipboard. Model mis. `gemini/gemini-3.5-flash-lite`.
-
-Catatan: 9Router membalas SSE bila `stream` tidak diisi; di node HTTP Request set `"stream": false`.
-
-## PioAssist Fase 1: tiket & ACC Gate
-
-```
-Owner/PioCheck ──/acc (api/tickets.js, service_role)──▶ Supabase piobot_tickets
-n8n "PioBot · Router Tiket" (tiap menit)
-   ├─ rpc/piobot_agent_claim  (kunci publishable + header x-piobot-agent-secret)
-   ├─ psdraft/psmedia/pspost ──▶ Hermes /v1 (skill piostudio-*) ──▶ 9Router
-   ├─ help                    ──▶ 9Router gemini/gemini-3.5-flash-lite
-   └─ rpc/piobot_agent_report ──▶ status awaiting_acc (atau failed)
-Owner ACC ──▶ approved ──▶ n8n finalisasi ──▶ done   |  Revisi ──▶ revision ──▶ Hermes ulang
-n8n "PioStudio · PSPost Cron Tgl 28" (09.00 WIB) ──▶ rpc/piobot_agent_create (tiket pspost bulan depan)
+```powershell
+docker exec -u hermes hermes-agent hermes cron runs
 ```
 
-Status tiket: `new → processing → awaiting_acc → (approved → finalizing → done | revision → processing | rejected)`.
-Tiket macet > 15 menit diambil ulang; setelah 3 kali gagal jadi `failed`.
+Daftar ulang cron bila volume Hermes baru:
 
-Pemasangan (sekali):
+```powershell
+docker exec -u hermes hermes-agent hermes cron create --name "PioBot · Router Tiket (tiap menit)" --script piobot_router_tick.py --no-agent --deliver local --catch-up off --timezone Asia/Jakarta "* * * * *"
+```
 
-1. Supabase SQL Editor: jalankan `supabase/pioassist_phase1.sql`, lalu daftarkan hash secret agen:
-   ```sql
-   insert into public.piobot_agent_secrets(name, secret_sha256) values ('n8n', '<sha256 hex PIOBOT_AGENT_SECRET>')
-   on conflict (name) do update set secret_sha256 = excluded.secret_sha256, updated_at = now();
-   ```
-   `PIOBOT_AGENT_SECRET` ada di `docker/.env` (gitignored).
-2. Hermes: salin skill `docker/hermes-skills/piobot` ke `/opt/data/skills/piobot` di container.
-3. n8n: credential header-auth `pbAgentSecret001`, `pbHermesApiKey01`, `pb9RouterApiKey1`, lalu
-   `node docker/n8n/build-workflows.cjs`, `n8n import:workflow`, `n8n publish:workflow --id=...`.
+```powershell
+docker exec -u hermes hermes-agent hermes cron create --name "PioBot · Pengingat Kalender (tiap menit)" --script piobot_reminders.py --no-agent --deliver local --catch-up off --timezone Asia/Jakarta "* * * * *"
+```
 
-Hasil uji 2026-11-22: PSDraft → Hermes ~10 dtk, bantuan → 9Router ~2 dtk, PSPost Desember 2026 → Hermes ~18 dtk,
-semua berakhir `awaiting_acc` di Supabase. Jalur ACC dari web (`/acc`) aktif setelah deploy Vercel.
+```powershell
+docker exec -u hermes hermes-agent hermes cron create --name "PioStudio · PSPost (tgl 28 09.00 WIB)" --script piobot_pspost_monthly.py --no-agent --deliver local --catch-up on --timezone Asia/Jakarta "0 9 28 * *"
+```
 
-## Peran tiap service (Fase 1: PioBot + PioStudio)
+## n8n
 
-- **n8n** — SOP & router: webhook chat/ACC dari itpio.id, Wait ACC, cron tgl 28 (PSPost), simpan tiket/ACC ke Supabase.
-- **Hermes** — skill & kebiasaan Owner: PSDraft (riset ide & brief), auto-skill, dipanggil n8n via `/v1`.
-- **9Router** — gateway LLM privat dengan fallback, hanya di `piobot-net`.
+Workflow dibuat dari `n8n/build-workflows.cjs` (`node docker/n8n/build-workflows.cjs` → `n8n/workflows/*.json`),
+lalu `n8n import:workflow` dan `n8n publish:workflow --id=...`. Credential header-auth yang dirujuk:
+`pbAgentSecret001` (RPC DB), `pbHermesApiKey01`, `pb9RouterApiKey1`, `pbWebhookSecret1` (pemicu dari cron Hermes).
+Catatan: 9Router membalas SSE bila `stream` tidak diisi; workflow selalu mengirim `"stream": false`.
 
-## Backup (rencana VPS)
+## Hasil uji 2026-11-22 (semua lokal)
 
-Harian 03:00 WIB: volume `n8n-data`, `hermes_isolated_data`, `9router-data` ke cloud storage;
-snapshot VPS mingguan; backup manual sebelum upgrade atau buka fase baru.
+| Uji | Hasil |
+|---|---|
+| Webhook n8n tanpa secret / dengan secret | 403 / 200 |
+| Tiket PSDraft dari web lokal → cron Hermes → n8n → Hermes | `awaiting_acc` ±1 menit |
+| Revisi dari web → Hermes memperbaiki sesuai catatan | `awaiting_acc` lagi |
+| ACC dari web → n8n finalisasi | `done`, riwayat lengkap di `piobot_ticket_events` |
+| Cron Hermes (router + pengingat) | jalan tiap menit, 0 insiden |
+
+## Backup
+
+Harian 03:00 WIB: volume `piobot-db-data`, `n8n-data`, `hermes_isolated_data`, `9router-data`.
+Backup manual sebelum upgrade versi atau buka fase baru.

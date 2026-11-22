@@ -1,12 +1,12 @@
 // Generator workflow n8n PioAssist Fase 1. Jalankan: node docker/n8n/build-workflows.cjs
 // Menulis docker/n8n/workflows/*.json (tanpa rahasia; credential dirujuk lewat id).
+// Semua lokal: database = PostgREST piobot-rest di piobot-net, jadwal = cron Hermes yang memanggil webhook n8n.
 const fs = require("fs");
 const path = require("path");
 
-const SUPABASE = "https://kuupfncfzzghedhbvxkj.supabase.co/rest/v1/rpc/";
-// Kunci publishable Supabase (publik, sama dengan yang dipakai web). Akses RPC tetap butuh secret agen.
-const PUBLISHABLE = "sb_publishable_8lo6Z6xGbPEeMMcW0UWRUA_KLQVwUmM";
+const SUPABASE = "http://piobot-rest:3000/rpc/";
 const CRED = {
+  webhook: { httpHeaderAuth: { id: "pbWebhookSecret1", name: "PioBot Webhook Secret (cron Hermes)" } },
   agent: { httpHeaderAuth: { id: "pbAgentSecret001", name: "PioBot Agent Secret (Supabase RPC)" } },
   hermes: { httpHeaderAuth: { id: "pbHermesApiKey01", name: "Hermes API (hermes-agent:8642)" } },
   router: { httpHeaderAuth: { id: "pb9RouterApiKey1", name: "9Router API (9router:20128)" } }
@@ -34,7 +34,7 @@ function http(name, position, { url, cred, jsonBody, headers = [], timeout = 300
   };
 }
 
-const supaHeaders = [{ name: "apikey", value: PUBLISHABLE }, { name: "Content-Type", value: "application/json" }];
+const supaHeaders = [{ name: "Content-Type", value: "application/json" }];
 
 function code(name, position, jsCode, mode = "runOnceForAllItems") {
   return {
@@ -63,13 +63,15 @@ function ifEquals(name, position, left, right) {
   };
 }
 
-function schedule(name, position, rule) {
+// Pemicu dari cron Hermes: POST http://n8n:5678/webhook/<path> dengan header x-piobot-webhook-secret.
+function webhook(name, position, pathName, webhookId) {
   return {
     id: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-    name, position,
-    type: "n8n-nodes-base.scheduleTrigger",
-    typeVersion: 1.2,
-    parameters: { rule: { interval: [rule] } }
+    name, position, webhookId,
+    type: "n8n-nodes-base.webhook",
+    typeVersion: 2,
+    parameters: { httpMethod: "POST", path: pathName, authentication: "headerAuth", responseMode: "onReceived", options: {} },
+    credentials: CRED.webhook
   };
 }
 
@@ -147,8 +149,8 @@ const router = {
   active: true,
   settings: { executionOrder: "v1", timezone: "Asia/Jakarta", saveDataSuccessExecution: "all", saveDataErrorExecution: "all" },
   nodes: [
-    schedule("Tiap menit", [0, 300], { field: "minutes", minutesInterval: 1 }),
-    http("Ambil tiket (Supabase)", [220, 300], {
+    webhook("Cron Hermes · tiap menit", [0, 300], "piobot-router", "5f0c9a52-6b1e-4d8e-9a77-3c2f1b0d4e01"),
+    http("Ambil tiket (DB lokal)", [220, 300], {
       url: SUPABASE + "piobot_agent_claim", cred: "agent", headers: supaHeaders,
       jsonBody: '={{ JSON.stringify({ p_limit: 3 }) }}'
     }),
@@ -168,22 +170,22 @@ const router = {
       jsonBody: "={{ JSON.stringify($json.body) }}"
     }),
     code("Susun laporan", [1540, 440], REPORT_JS, "runOnceForEachItem"),
-    http("Laporkan ke Supabase", [1780, 300], {
+    http("Laporkan ke DB lokal", [1780, 300], {
       url: SUPABASE + "piobot_agent_report", cred: "agent", headers: supaHeaders,
       jsonBody: "={{ JSON.stringify($json) }}"
     })
   ],
   connections: {
-    "Tiap menit": link("Ambil tiket (Supabase)"),
-    "Ambil tiket (Supabase)": link("Hanya tiket valid"),
+    "Cron Hermes · tiap menit": link("Ambil tiket (DB lokal)"),
+    "Ambil tiket (DB lokal)": link("Hanya tiket valid"),
     "Hanya tiket valid": link("Sudah di-ACC?"),
     "Sudah di-ACC?": link("Susun finalisasi", "Bangun prompt"),
-    "Susun finalisasi": link("Laporkan ke Supabase"),
+    "Susun finalisasi": link("Laporkan ke DB lokal"),
     "Bangun prompt": link("Pakai Hermes?"),
     "Pakai Hermes?": link("Hermes · PioStudio", "9Router · PioBot CS"),
     "Hermes · PioStudio": link("Susun laporan"),
     "9Router · PioBot CS": link("Susun laporan"),
-    "Susun laporan": link("Laporkan ke Supabase")
+    "Susun laporan": link("Laporkan ke DB lokal")
   },
   pinData: {}
 };
@@ -209,51 +211,23 @@ const pspost = {
   active: true,
   settings: { executionOrder: "v1", timezone: "Asia/Jakarta", saveDataSuccessExecution: "all", saveDataErrorExecution: "all" },
   nodes: [
-    schedule("Tgl 28 pukul 09.00 WIB", [0, 300], { field: "cronExpression", expression: "0 9 28 * *" }),
+    webhook("Cron Hermes · tgl 28 09.00", [0, 300], "piostudio-pspost", "8a3d2e61-0c4f-4b9a-b1d5-7e6f2a9c3b02"),
     code("Siapkan tiket bulan depan", [240, 300], PSPOST_JS),
-    http("Buat tiket PSPost (Supabase)", [480, 300], {
+    http("Buat tiket PSPost (DB lokal)", [480, 300], {
       url: SUPABASE + "piobot_agent_create", cred: "agent", headers: supaHeaders,
       jsonBody: "={{ JSON.stringify($json) }}"
     })
   ],
   connections: {
-    "Tgl 28 pukul 09.00 WIB": link("Siapkan tiket bulan depan"),
-    "Siapkan tiket bulan depan": link("Buat tiket PSPost (Supabase)")
+    "Cron Hermes · tgl 28 09.00": link("Siapkan tiket bulan depan"),
+    "Siapkan tiket bulan depan": link("Buat tiket PSPost (DB lokal)")
   },
-  pinData: {}
-};
-
-// ---------------------------------------------------------------- Pengingat kalender per menit
-// Vercel Hobby hanya mengizinkan cron harian, jadi n8n yang memanggil /api/cron/reminders tiap menit.
-// Credential pbCronSecret0001: header Authorization = "Bearer <CRON_SECRET Vercel Production>".
-CRED.cron = { httpHeaderAuth: { id: "pbCronSecret0001", name: "PioBot CRON_SECRET (Vercel)" } };
-const reminders = {
-  id: "pbReminderCron01",
-  name: "PioBot · Pengingat Kalender (tiap menit)",
-  active: false,
-  settings: { executionOrder: "v1", timezone: "Asia/Jakarta", saveDataSuccessExecution: "none", saveDataErrorExecution: "all" },
-  nodes: [
-    schedule("Tiap menit", [0, 300], { field: "minutes", minutesInterval: 1 }),
-    {
-      id: "panggil-reminders", name: "Panggil /api/cron/reminders", position: [240, 300],
-      type: "n8n-nodes-base.httpRequest", typeVersion: 4.2,
-      parameters: {
-        method: "GET",
-        url: "https://pioassist.itpio.id/api/cron/reminders",
-        authentication: "genericCredentialType",
-        genericAuthType: "httpHeaderAuth",
-        options: { timeout: 60000 }
-      },
-      credentials: CRED.cron
-    }
-  ],
-  connections: { "Tiap menit": link("Panggil /api/cron/reminders") },
   pinData: {}
 };
 
 const out = path.join(__dirname, "workflows");
 fs.mkdirSync(out, { recursive: true });
-for (const wf of [router, pspost, reminders]) {
+for (const wf of [router, pspost]) {
   const file = path.join(out, wf.id + ".json");
   fs.writeFileSync(file, JSON.stringify(wf, null, 2) + "\n");
   console.log("wrote", path.relative(process.cwd(), file));
