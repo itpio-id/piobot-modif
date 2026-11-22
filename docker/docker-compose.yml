@@ -1,0 +1,82 @@
+# PioBot stack lokal: 9Router + n8n + Hermes Agent, satu network piobot-net.
+# Jalankan: docker compose -f docker/docker-compose.yml up -d
+# Rahasia di docker/.env (gitignored). Detail & cara sambung: docker/README.md
+
+services:
+  9router:
+    image: node:22-alpine
+    container_name: 9router
+    restart: unless-stopped
+    command: ["npx", "-y", "9router"]
+    tty: true
+    stdin_open: true
+    environment:
+      - PORT=20128
+      - HOSTNAME=0.0.0.0
+      # Password login dashboard 9Router. Isi di docker/.env (jangan di-commit):
+      # NINEROUTER_PASSWORD=passwordkamu
+      - INITIAL_PASSWORD=${NINEROUTER_PASSWORD}
+    volumes:
+      - 9router-data:/root/.9router
+    # Dashboard hanya bisa dibuka dari laptop ini, TIDAK dari jaringan/internet.
+    # Hermes & n8n memanggilnya lewat network piobot-net: http://9router:20128/v1
+    ports:
+      - "127.0.0.1:20128:20128"
+    networks:
+      - piobot-net
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    environment:
+      - GENERIC_TIMEZONE=Asia/Jakarta
+      - TZ=Asia/Jakarta
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_SECURE_COOKIE=false
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_RUNNERS_ENABLED=true
+    volumes:
+      - n8n-data:/home/node/.n8n
+    ports:
+      - "127.0.0.1:5678:5678"
+    networks:
+      - piobot-net
+
+  hermes-agent:
+    image: nousresearch/hermes-agent
+    container_name: hermes-agent
+    restart: unless-stopped
+    command: ["gateway", "run"]
+    environment:
+      - HERMES_DASHBOARD=1
+      - HERMES_DASHBOARD_HOST=0.0.0.0
+      - HERMES_DASHBOARD_PORT=9119
+      - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin
+      # Isi di docker/.env (jangan di-commit):
+      # HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=passwordkamu
+      - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=${HERMES_DASHBOARD_BASIC_AUTH_PASSWORD}
+    volumes:
+      - hermes-data:/opt/data
+    # API server Hermes (/v1, butuh API_SERVER_KEY) hanya dari laptop ini.
+    # n8n memanggilnya lewat piobot-net: http://hermes-agent:8642/v1
+    # (config Hermes: platforms.api_server.extra.host = 0.0.0.0)
+    ports:
+      - "127.0.0.1:8642:8642"
+      - "127.0.0.1:9119:9119"
+    networks:
+      - piobot-net
+
+volumes:
+  9router-data:
+  n8n-data:
+  hermes-data:
+    name: hermes_isolated_data
+    external: true
+
+networks:
+  piobot-net:
+    name: piobot-net
