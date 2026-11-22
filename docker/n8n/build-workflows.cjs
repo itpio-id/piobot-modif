@@ -80,7 +80,7 @@ const link = (...targets) => ({ main: targets.map(t => (t ? [].concat(t).map(nod
 // ---------------------------------------------------------------- Router tiket
 const PROMPT_JS = String.raw`
 const SKILL = { psdraft: 'piostudio-psdraft', psmedia: 'piostudio-psmedia', pspost: 'piostudio-pspost' };
-const HELP_SYSTEM = 'Kamu PioBot, CS ITPIO Surabaya–Sidoarjo. Jawab pertanyaan tiket secara singkat, ramah, dan akurat dalam bahasa Indonesia. Jangan menjanjikan harga, stok, atau jadwal pasti; tandai hal yang perlu dikonfirmasi Owner. Jangan sebut nama model AI.';
+const HELP_SYSTEM = 'Kamu PioBot, CS ITPIO. Jawab pertanyaan tiket secara singkat, ramah, dan akurat dalam bahasa Indonesia. Sebut dirimu "aku" (bukan "saya"), sapa penanya "kamu" (bukan "Anda"), jangan pakai tanda pisah panjang (— atau –), dan jangan pernah menyebut Surabaya atau Sidoarjo. Jangan menjanjikan harga, stok, atau jadwal pasti; tandai hal yang perlu dikonfirmasi Owner. Jangan sebut nama model AI.';
 return $input.all().map(item => {
   const t = item.json;
   const req = t.request || {};
