@@ -136,6 +136,8 @@ details summary{cursor:pointer;font-size:12px;color:var(--muted);margin-top:8px}
     return data;
   }
 
+  function renderBotText(t){const e=String(t==null?"":t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));return e.split("\n").map(l=>{const h=l.match(/^\s{0,3}#{1,6}\s+(.*)$/);if(h)return "<strong>"+h[1].replace(/\*\*/g,"")+"</strong>";if(/^\s*([-*_])\1{2,}\s*$/.test(l))return "";return l.replace(/^(\s*)[*-]\s+/,"$1• ")}).join("\n").replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/__(.+?)__/g,"<strong>$1</strong>").replace(/`([^`\n]+)`/g,"$1").replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?:;]|$)/gm,"$1<em>$2</em>")}
+
   function resultText(r) {
     if (!r) return "";
     if (typeof r.content === "string") return r.content;
@@ -152,7 +154,7 @@ details summary{cursor:pointer;font-size:12px;color:var(--muted);margin-top:8px}
         <div class="meta">${esc(t.kindLabel)} · oleh ${esc(t.createdBy)} · diperbarui ${esc(when(t.updatedAt))}</div>
         ${t.request && t.request.brief ? `<div class="meta">Brief: ${esc(t.request.brief)}</div>` : ""}
         ${t.revisionNote ? `<div class="meta">Catatan revisi: ${esc(t.revisionNote)}</div>` : ""}
-        ${t.result ? `<div class="result">${esc(resultText(t.result))}</div>` : ""}
+        ${t.result ? `<div class="result">${renderBotText(resultText(t.result))}</div>` : ""}
         ${t.status === "awaiting_acc" ? `
           <div class="actions">
             <textarea placeholder="Catatan (wajib untuk revisi)" maxlength="2000"></textarea>
