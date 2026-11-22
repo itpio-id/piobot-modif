@@ -71,6 +71,7 @@ Data lama di Supabase cloud (invoice, token Google, langganan push) tidak ikut p
 ## Hermes
 
 - Model default lewat 9Router (`gemini/gemini-3.5-flash-lite`), fallback `gemini-3.8-flash` lalu Nous.
+- Persona: `hermes-soul/SOUL.md` (dari `SOULPiobot.md`) → `/opt/data/SOUL.md`; cadangan bawaan `SOUL.md.bak-before-piobot`.
 - Skill PioStudio: `hermes-skills/piobot/*` → `/opt/data/skills/piobot/`.
 - Cron (mode `--no-agent`, tanpa token LLM): `hermes-scripts/*.py` → `/opt/data/scripts/`, secret dibaca dari `/opt/data/.env`.
 
