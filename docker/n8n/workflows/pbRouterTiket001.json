@@ -1,0 +1,455 @@
+{
+  "id": "pbRouterTiket001",
+  "name": "PioBot · Router Tiket (Fase 1)",
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "nodes": [
+    {
+      "id": "tiap-menit",
+      "name": "Tiap menit",
+      "position": [
+        0,
+        300
+      ],
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ambil-tiket-supabase-",
+      "name": "Ambil tiket (Supabase)",
+      "position": [
+        220,
+        300
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "https://kuupfncfzzghedhbvxkj.supabase.co/rest/v1/rpc/piobot_agent_claim",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "sb_publishable_8lo6Z6xGbPEeMMcW0UWRUA_KLQVwUmM"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_limit: 3 }) }}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pbAgentSecret001",
+          "name": "PioBot Agent Secret (Supabase RPC)"
+        }
+      }
+    },
+    {
+      "id": "hanya-tiket-valid",
+      "name": "Hanya tiket valid",
+      "position": [
+        440,
+        300
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "return $input.all().filter(i => i.json && typeof i.json.id === 'string' && i.json.status);"
+      }
+    },
+    {
+      "id": "sudah-di-acc-",
+      "name": "Sudah di-ACC?",
+      "position": [
+        660,
+        300
+      ],
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "finalizing",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "susun-finalisasi",
+      "name": "Susun finalisasi",
+      "position": [
+        880,
+        160
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "\nconst NEXT = {\n  psdraft: 'Draf disetujui. Lanjutkan produksi: buat tiket PSMedia bila butuh aset, atau masukkan ke ClickUp dari Workspace.',\n  psmedia: 'Spesifikasi aset disetujui. Siap dikirim ke API media (carousel / video 10 dtk / audio).',\n  pspost: 'Rencana posting disetujui. Jadwalkan konten sesuai tabel; tiap konten tetap lewat ACC sebelum tayang.',\n  help: 'Jawaban disetujui dan siap dikirim ke penanya.'\n};\nreturn $input.all().map(item => ({ json: {\n  p_ticket_id: item.json.id,\n  p_status: 'done',\n  p_result: { finalized_at: new Date().toISOString(), next_step: NEXT[item.json.kind] || 'Selesai.' },\n  p_note: 'Difinalisasi n8n setelah ACC.'\n} }));"
+      }
+    },
+    {
+      "id": "bangun-prompt",
+      "name": "Bangun prompt",
+      "position": [
+        880,
+        440
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "\nconst SKILL = { psdraft: 'piostudio-psdraft', psmedia: 'piostudio-psmedia', pspost: 'piostudio-pspost' };\nconst HELP_SYSTEM = 'Kamu PioBot, CS ITPIO Surabaya–Sidoarjo. Jawab pertanyaan tiket secara singkat, ramah, dan akurat dalam bahasa Indonesia. Jangan menjanjikan harga, stok, atau jadwal pasti; tandai hal yang perlu dikonfirmasi Owner. Jangan sebut nama model AI.';\nreturn $input.all().map(item => {\n  const t = item.json;\n  const req = t.request || {};\n  const lines = [\n    'Tiket ' + t.kind + ' #' + String(t.id).slice(0, 8),\n    'Judul: ' + t.title,\n    req.brief ? 'Brief: ' + req.brief : '',\n    req.channel ? 'Kanal: ' + req.channel : '',\n    req.audience ? 'Audiens: ' + req.audience : '',\n    req.deadline ? 'Tenggat: ' + req.deadline : '',\n    req.month ? 'Bulan target: ' + req.month : ''\n  ].filter(Boolean);\n  const prev = t.result && t.result.content;\n  if (t.revision_note) {\n    lines.push('', 'Catatan revisi dari Owner/PioCheck: ' + t.revision_note);\n    if (prev) lines.push('', 'Draf sebelumnya:', String(prev).slice(0, 6000));\n  }\n  const useHermes = Boolean(SKILL[t.kind]);\n  const system = useHermes\n    ? 'Kamu dipanggil oleh n8n PioAssist (ACC Gate itpio.id). Muat dan ikuti skill ' + SKILL[t.kind] + ' lalu kerjakan tiket di bawah. Jawab hanya dengan hasil draf dalam Markdown.'\n    : HELP_SYSTEM;\n  const body = useHermes\n    ? { model: 'hermes-agent', stream: false, messages: [{ role: 'system', content: system }, { role: 'user', content: lines.join('\\n') }] }\n    : { model: 'gemini/gemini-3.5-flash-lite', stream: false, max_tokens: 900, messages: [{ role: 'system', content: system }, { role: 'user', content: lines.join('\\n') }] };\n  return { json: { ticket_id: t.id, kind: t.kind, engine: useHermes ? 'hermes' : '9router', body } };\n});"
+      }
+    },
+    {
+      "id": "pakai-hermes-",
+      "name": "Pakai Hermes?",
+      "position": [
+        1100,
+        440
+      ],
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.engine }}",
+              "rightValue": "hermes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "hermes-piostudio",
+      "name": "Hermes · PioStudio",
+      "position": [
+        1320,
+        360
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "http://hermes-agent:8642/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 300000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pbHermesApiKey01",
+          "name": "Hermes API (hermes-agent:8642)"
+        }
+      }
+    },
+    {
+      "id": "9router-piobot-cs",
+      "name": "9Router · PioBot CS",
+      "position": [
+        1320,
+        540
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "http://9router:20128/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pb9RouterApiKey1",
+          "name": "9Router API (9router:20128)"
+        }
+      }
+    },
+    {
+      "id": "susun-laporan",
+      "name": "Susun laporan",
+      "position": [
+        1540,
+        440
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst t = $('Bangun prompt').item.json;\nconst r = $json || {};\nconst choice = r.choices && r.choices[0];\nconst content = choice && choice.message && choice.message.content;\nif (typeof content === 'string' && content.trim()) {\n  return { json: {\n    p_ticket_id: t.ticket_id,\n    p_status: 'awaiting_acc',\n    p_result: { content: content.trim(), engine: t.engine, model: r.model || null, generated_at: new Date().toISOString() },\n    p_note: 'Draf dibuat oleh ' + t.engine + '; menunggu ACC.'\n  } };\n}\nconst err = (r.error && (r.error.message || r.error)) || r.message || 'tidak ada jawaban';\nreturn { json: {\n  p_ticket_id: t.ticket_id,\n  p_status: 'failed',\n  p_result: { error: String(typeof err === 'string' ? err : JSON.stringify(err)).slice(0, 500), engine: t.engine },\n  p_note: 'Agen ' + t.engine + ' gagal: ' + String(typeof err === 'string' ? err : JSON.stringify(err)).slice(0, 300)\n} };"
+      }
+    },
+    {
+      "id": "laporkan-ke-supabase",
+      "name": "Laporkan ke Supabase",
+      "position": [
+        1780,
+        300
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "https://kuupfncfzzghedhbvxkj.supabase.co/rest/v1/rpc/piobot_agent_report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "sb_publishable_8lo6Z6xGbPEeMMcW0UWRUA_KLQVwUmM"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pbAgentSecret001",
+          "name": "PioBot Agent Secret (Supabase RPC)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Tiap menit": {
+      "main": [
+        [
+          {
+            "node": "Ambil tiket (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ambil tiket (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Hanya tiket valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hanya tiket valid": {
+      "main": [
+        [
+          {
+            "node": "Sudah di-ACC?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sudah di-ACC?": {
+      "main": [
+        [
+          {
+            "node": "Susun finalisasi",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bangun prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Susun finalisasi": {
+      "main": [
+        [
+          {
+            "node": "Laporkan ke Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bangun prompt": {
+      "main": [
+        [
+          {
+            "node": "Pakai Hermes?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pakai Hermes?": {
+      "main": [
+        [
+          {
+            "node": "Hermes · PioStudio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "9Router · PioBot CS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hermes · PioStudio": {
+      "main": [
+        [
+          {
+            "node": "Susun laporan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9Router · PioBot CS": {
+      "main": [
+        [
+          {
+            "node": "Susun laporan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Susun laporan": {
+      "main": [
+        [
+          {
+            "node": "Laporkan ke Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

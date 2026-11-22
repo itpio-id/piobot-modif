@@ -1,0 +1,117 @@
+{
+  "id": "pbPSPostCron0001",
+  "name": "PioStudio · PSPost Cron Tgl 28",
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "nodes": [
+    {
+      "id": "tgl-28-pukul-09-00-wib",
+      "name": "Tgl 28 pukul 09.00 WIB",
+      "position": [
+        0,
+        300
+      ],
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 28 * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "siapkan-tiket-bulan-depan",
+      "name": "Siapkan tiket bulan depan",
+      "position": [
+        240,
+        300
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "\nconst now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));\nconst next = new Date(now.getFullYear(), now.getMonth() + 1, 1);\nconst month = next.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });\nreturn [{ json: {\n  p_kind: 'pspost',\n  p_title: 'Rencana posting ' + month,\n  p_request: {\n    month,\n    channel: 'TikTok + YouTube Shorts',\n    brief: 'Susun rencana posting PioStudio untuk ' + month + ': cek algoritma terbaru, maksimal 3 konten per minggu, sertakan kebutuhan produksi.'\n  }\n} }];"
+      }
+    },
+    {
+      "id": "buat-tiket-pspost-supabase-",
+      "name": "Buat tiket PSPost (Supabase)",
+      "position": [
+        480,
+        300
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "https://kuupfncfzzghedhbvxkj.supabase.co/rest/v1/rpc/piobot_agent_create",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "sb_publishable_8lo6Z6xGbPEeMMcW0UWRUA_KLQVwUmM"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pbAgentSecret001",
+          "name": "PioBot Agent Secret (Supabase RPC)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Tgl 28 pukul 09.00 WIB": {
+      "main": [
+        [
+          {
+            "node": "Siapkan tiket bulan depan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Siapkan tiket bulan depan": {
+      "main": [
+        [
+          {
+            "node": "Buat tiket PSPost (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

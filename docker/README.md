@@ -86,6 +86,37 @@ docker exec -u hermes hermes-agent sh -c "grep '^NINEROUTER_API_KEY=' /opt/data/
 
 Catatan: 9Router membalas SSE bila `stream` tidak diisi; di node HTTP Request set `"stream": false`.
 
+## PioAssist Fase 1: tiket & ACC Gate
+
+```
+Owner/PioCheck ──/acc (api/tickets.js, service_role)──▶ Supabase piobot_tickets
+n8n "PioBot · Router Tiket" (tiap menit)
+   ├─ rpc/piobot_agent_claim  (kunci publishable + header x-piobot-agent-secret)
+   ├─ psdraft/psmedia/pspost ──▶ Hermes /v1 (skill piostudio-*) ──▶ 9Router
+   ├─ help                    ──▶ 9Router gemini/gemini-3.5-flash-lite
+   └─ rpc/piobot_agent_report ──▶ status awaiting_acc (atau failed)
+Owner ACC ──▶ approved ──▶ n8n finalisasi ──▶ done   |  Revisi ──▶ revision ──▶ Hermes ulang
+n8n "PioStudio · PSPost Cron Tgl 28" (09.00 WIB) ──▶ rpc/piobot_agent_create (tiket pspost bulan depan)
+```
+
+Status tiket: `new → processing → awaiting_acc → (approved → finalizing → done | revision → processing | rejected)`.
+Tiket macet > 15 menit diambil ulang; setelah 3 kali gagal jadi `failed`.
+
+Pemasangan (sekali):
+
+1. Supabase SQL Editor: jalankan `supabase/pioassist_phase1.sql`, lalu daftarkan hash secret agen:
+   ```sql
+   insert into public.piobot_agent_secrets(name, secret_sha256) values ('n8n', '<sha256 hex PIOBOT_AGENT_SECRET>')
+   on conflict (name) do update set secret_sha256 = excluded.secret_sha256, updated_at = now();
+   ```
+   `PIOBOT_AGENT_SECRET` ada di `docker/.env` (gitignored).
+2. Hermes: salin skill `docker/hermes-skills/piobot` ke `/opt/data/skills/piobot` di container.
+3. n8n: credential header-auth `pbAgentSecret001`, `pbHermesApiKey01`, `pb9RouterApiKey1`, lalu
+   `node docker/n8n/build-workflows.cjs`, `n8n import:workflow`, `n8n publish:workflow --id=...`.
+
+Hasil uji 2026-11-22: PSDraft → Hermes ~10 dtk, bantuan → 9Router ~2 dtk, PSPost Desember 2026 → Hermes ~18 dtk,
+semua berakhir `awaiting_acc` di Supabase. Jalur ACC dari web (`/acc`) aktif setelah deploy Vercel.
+
 ## Peran tiap service (Fase 1: PioBot + PioStudio)
 
 - **n8n** — SOP & router: webhook chat/ACC dari itpio.id, Wait ACC, cron tgl 28 (PSPost), simpan tiket/ACC ke Supabase.

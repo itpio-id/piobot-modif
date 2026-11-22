@@ -25,6 +25,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/acc",
+      "destination": "/acc.html"
+    },
+    {
       "source": "/api/auth/callback/google",
       "destination": "/api/google/callback"
     }

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0c1115">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/piobot-32.png">
+<title>ACC Gate PioAssist</title>
+<meta name="description" content="Tiket PioAssist Fase 1: draf PioStudio dari Hermes menunggu ACC Owner atau PioCheck.">
+<style>
+:root{--bg:#0b1014;--surface:#11191f;--surface2:#172229;--line:#25343c;--ink:#eef4f4;--muted:#96a9ae;--mint:#75efc0;--blue:#82b9ff;--gold:#e2b47a;--danger:#ff8b83;--input-bg:#0b1216;--soft-border:#304149;--radius:16px}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f2f6f7;--surface:#fff;--surface2:#f3f7f8;--line:#d5e0e3;--ink:#182b32;--muted:#4d626a;--mint:#087f66;--blue:#347ac4;--gold:#835710;--danger:#b73530;--input-bg:#fbfcfd;--soft-border:#c7d5d9}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,"Segoe UI",sans-serif}
+button,input,textarea,select{font:inherit;color:inherit}
+a{color:var(--mint)}
+.wrap{max-width:1100px;margin:auto;padding:20px 16px 48px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+header h1{font-size:clamp(24px,3vw,32px);letter-spacing:-.04em;margin:0}
+.eyebrow{font:10px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+header .sp{flex:1}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.full{grid-column:1/-1}
+label{display:grid;gap:5px;font-size:12px;color:var(--muted)}
+input,textarea,select{width:100%;background:var(--input-bg);border:1px solid var(--soft-border);border-radius:10px;padding:10px 12px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--mint)}
+textarea{min-height:84px;resize:vertical}
+.btn{border:1px solid var(--soft-border);background:var(--surface2);border-radius:10px;padding:9px 14px;cursor:pointer;font-size:13px}
+.btn.primary{background:var(--mint);border-color:var(--mint);color:#071310;font-weight:600}
+.btn.warn{border-color:var(--gold);color:var(--gold)}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:default}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid var(--soft-border);background:transparent;border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer}
+.tabs button.on{border-color:var(--mint);color:var(--mint)}
+.ticket{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px;background:var(--surface2)}
+.ticket .top{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.ticket strong{font-size:14px}
+.pill{font:11px ui-monospace,monospace;border-radius:99px;padding:2px 8px;border:1px solid var(--soft-border);color:var(--muted)}
+.pill.awaiting_acc{border-color:var(--gold);color:var(--gold)}
+.pill.done,.pill.approved,.pill.finalizing{border-color:var(--mint);color:var(--mint)}
+.pill.failed,.pill.rejected{border-color:var(--danger);color:var(--danger)}
+.pill.processing,.pill.new,.pill.revision{border-color:var(--blue);color:var(--blue)}
+.meta{font-size:12px;color:var(--muted)}
+.result{white-space:pre-wrap;margin:10px 0 0;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:14px;max-height:420px;overflow:auto}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:flex-start}
+.actions textarea{min-height:44px;flex:1 1 240px}
+details summary{cursor:pointer;font-size:12px;color:var(--muted);margin-top:8px}
+.log{font:12px ui-monospace,monospace;color:var(--muted);margin:6px 0 0;padding-left:16px}
+.status{min-height:20px;font-size:13px;color:var(--muted);margin-top:8px}
+.empty{color:var(--muted);font-size:14px;padding:12px 0}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">PioAssist · Fase 1 · PioBot + PioStudio</div>
+      <h1>ACC Gate</h1>
+    </div>
+    <span class="sp"></span>
+    <a href="/" class="btn">← Workspace</a>
+    <button class="btn" id="refresh" type="button">Muat ulang</button>
+  </header>
+
+  <section class="card" id="login-card" hidden>
+    <h2>Masuk dulu</h2>
+    <p class="meta">Halaman ini hanya untuk Owner dan PioCheck. Masuk di <a href="/">Workspace PioBot</a>, lalu kembali ke sini.</p>
+  </section>
+
+  <section class="card" id="create-card" hidden>
+    <h2>Tiket baru untuk agen</h2>
+    <form id="create" class="grid">
+      <label>Jenis
+        <select name="kind" required>
+          <option value="psdraft">PSDraft · brief & ide konten</option>
+          <option value="psmedia">PSMedia · aset visual / video 10 dtk / audio</option>
+          <option value="pspost">PSPost · rencana posting bulanan</option>
+          <option value="help">PioBot · pertanyaan / bantuan</option>
+        </select>
+      </label>
+      <label>Kanal
+        <input name="channel" value="TikTok + YouTube Shorts" maxlength="60">
+      </label>
+      <label class="full">Judul
+        <input name="title" required maxlength="200" placeholder="Contoh: 3 ide konten servis laptop minggu depan">
+      </label>
+      <label class="full">Brief
+        <textarea name="brief" maxlength="4000" placeholder="Tujuan, produk/layanan, gaya bahasa, hal yang wajib/terlarang…"></textarea>
+      </label>
+      <label>Target audiens
+        <input name="audience" maxlength="200" placeholder="UMKM Surabaya–Sidoarjo">
+      </label>
+      <label>Tenggat
+        <input name="deadline" type="date">
+      </label>
+      <div class="full actions"><button class="btn primary" type="submit">Kirim ke agen</button></div>
+    </form>
+    <div class="status" id="create-status" role="status"></div>
+  </section>
+
+  <section class="card" id="list-card" hidden>
+    <h2>Tiket</h2>
+    <div class="tabs" id="tabs">
+      <button type="button" data-f="awaiting_acc" class="on">Menunggu ACC</button>
+      <button type="button" data-f="active">Diproses</button>
+      <button type="button" data-f="closed">Selesai</button>
+      <button type="button" data-f="all">Semua</button>
+    </div>
+    <div id="list"></div>
+  </section>
+</div>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const ACTIVE = ["new", "processing", "revision", "approved", "finalizing"];
+  const CLOSED = ["done", "rejected", "failed"];
+  const LABEL = { new: "baru", processing: "diproses agen", awaiting_acc: "menunggu ACC", revision: "revisi", approved: "di-ACC", finalizing: "finalisasi", done: "selesai", rejected: "ditolak", failed: "gagal" };
+  let items = [];
+  let filter = "awaiting_acc";
+  try { filter = localStorage.getItem("acc-filter") || filter; } catch {}
+
+  const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const when = v => v ? new Date(v).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "";
+
+  async function api(method, body) {
+    const res = await fetch("/api/tickets", {
+      method, credentials: "same-origin",
+      headers: body ? { "Content-Type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw Object.assign(new Error(data.error || "Permintaan gagal."), { status: res.status });
+    return data;
+  }
+
+  function resultText(r) {
+    if (!r) return "";
+    if (typeof r.content === "string") return r.content;
+    return JSON.stringify(r, null, 2);
+  }
+
+  function render() {
+    for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("on", b.dataset.f === filter);
+    const shown = items.filter(t => filter === "all" || (filter === "active" ? ACTIVE.includes(t.status) : filter === "closed" ? CLOSED.includes(t.status) : t.status === filter));
+    if (!shown.length) { $("#list").innerHTML = '<div class="empty">Tidak ada tiket di sini.</div>'; return; }
+    $("#list").innerHTML = shown.map(t => `
+      <article class="ticket" data-id="${esc(t.id)}">
+        <div class="top"><strong>${esc(t.title)}</strong><span class="pill ${esc(t.status)}">${esc(LABEL[t.status] || t.status)}</span></div>
+        <div class="meta">${esc(t.kindLabel)} · oleh ${esc(t.createdBy)} · diperbarui ${esc(when(t.updatedAt))}</div>
+        ${t.request && t.request.brief ? `<div class="meta">Brief: ${esc(t.request.brief)}</div>` : ""}
+        ${t.revisionNote ? `<div class="meta">Catatan revisi: ${esc(t.revisionNote)}</div>` : ""}
+        ${t.result ? `<div class="result">${esc(resultText(t.result))}</div>` : ""}
+        ${t.status === "awaiting_acc" ? `
+          <div class="actions">
+            <textarea placeholder="Catatan (wajib untuk revisi)" maxlength="2000"></textarea>
+            <button class="btn primary" data-a="approve" type="button">ACC</button>
+            <button class="btn warn" data-a="revise" type="button">Revisi</button>
+            <button class="btn danger" data-a="reject" type="button">Tolak</button>
+          </div>` : ""}
+        ${t.events && t.events.length ? `<details><summary>Riwayat (${t.events.length})</summary><ul class="log">${t.events.map(e => `<li>${esc(when(e.at))} · ${esc(e.actor)} · ${esc(e.action)}${e.note ? " — " + esc(e.note) : ""}</li>`).join("")}</ul></details>` : ""}
+        <div class="status" role="status"></div>
+      </article>`).join("");
+  }
+
+  async function load() {
+    try {
+      const data = await api("GET");
+      items = data.items || [];
+      $("#login-card").hidden = true;
+      $("#create-card").hidden = false;
+      $("#list-card").hidden = false;
+      render();
+    } catch (e) {
+      if (e.status === 401 || e.status === 403) { $("#login-card").hidden = false; return; }
+      $("#list-card").hidden = false;
+      $("#list").innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+    }
+  }
+
+  $("#tabs").addEventListener("click", e => {
+    const b = e.target.closest("button[data-f]");
+    if (!b) return;
+    filter = b.dataset.f;
+    try { localStorage.setItem("acc-filter", filter); } catch {}
+    render();
+  });
+
+  $("#list").addEventListener("click", async e => {
+    const b = e.target.closest("button[data-a]");
+    if (!b) return;
+    const card = b.closest(".ticket");
+    const note = card.querySelector("textarea").value.trim();
+    const status = card.querySelector(".status");
+    card.querySelectorAll("button").forEach(x => x.disabled = true);
+    try {
+      await api("POST", { action: b.dataset.a, id: card.dataset.id, note });
+      status.textContent = b.dataset.a === "approve" ? "Di-ACC. Agen akan memfinalisasi." : b.dataset.a === "revise" ? "Dikirim balik ke agen untuk revisi." : "Tiket ditolak.";
+      setTimeout(load, 700);
+    } catch (err) {
+      status.textContent = err.message;
+      card.querySelectorAll("button").forEach(x => x.disabled = false);
+    }
+  });
+
+  $("#create").addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const st = $("#create-status");
+    st.textContent = "Mengirim…";
+    try {
+      await api("POST", { action: "create", ...Object.fromEntries(f) });
+      st.textContent = "Tiket terkirim. Agen mengambilnya dalam ±1 menit.";
+      e.target.reset();
+      filter = "active"; load();
+    } catch (err) { st.textContent = err.message; }
+  });
+
+  $("#refresh").addEventListener("click", load);
+  setInterval(() => { if (!document.hidden) load(); }, 30000);
+  load();
+})();
+</script>
+</body>
+</html>
